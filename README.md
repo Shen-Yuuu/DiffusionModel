@@ -1,3 +1,3 @@
-<<<<<<< HEAD
-please
+init diffusion model test
+
 
