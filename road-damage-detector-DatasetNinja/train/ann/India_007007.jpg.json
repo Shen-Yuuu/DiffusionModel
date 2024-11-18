@@ -1,0 +1,90 @@
+{
+    "description": "",
+    "tags": [
+        {
+            "id": 16586545,
+            "tagId": 29662,
+            "name": "India",
+            "value": null,
+            "labelerLogin": "inbox@datasetninja.com",
+            "createdAt": "2024-01-22T16:22:49.749Z",
+            "updatedAt": "2024-01-22T16:22:49.749Z"
+        }
+    ],
+    "size": {
+        "height": 720,
+        "width": 720
+    },
+    "objects": [
+        {
+            "id": 139001514,
+            "classId": 6512002,
+            "objectId": null,
+            "description": "",
+            "geometryType": "rectangle",
+            "labelerLogin": "inbox@datasetninja.com",
+            "createdAt": "2024-01-22T16:22:49.751Z",
+            "updatedAt": "2024-01-22T16:22:49.751Z",
+            "tags": [
+                {
+                    "id": 104988439,
+                    "tagId": 29666,
+                    "name": "detail",
+                    "value": "rutting, bump, pothole, separation",
+                    "labelerLogin": "inbox@datasetninja.com",
+                    "createdAt": "2024-01-22T16:22:49.751Z",
+                    "updatedAt": "2024-01-22T16:22:49.751Z"
+                }
+            ],
+            "classTitle": "pothole",
+            "points": {
+                "exterior": [
+                    [
+                        302,
+                        646
+                    ],
+                    [
+                        627,
+                        717
+                    ]
+                ],
+                "interior": []
+            }
+        },
+        {
+            "id": 139001513,
+            "classId": 6511999,
+            "objectId": null,
+            "description": "",
+            "geometryType": "rectangle",
+            "labelerLogin": "inbox@datasetninja.com",
+            "createdAt": "2024-01-22T16:22:49.750Z",
+            "updatedAt": "2024-01-22T16:22:49.750Z",
+            "tags": [
+                {
+                    "id": 104988438,
+                    "tagId": 29666,
+                    "name": "detail",
+                    "value": "construction joint part",
+                    "labelerLogin": "inbox@datasetninja.com",
+                    "createdAt": "2024-01-22T16:22:49.750Z",
+                    "updatedAt": "2024-01-22T16:22:49.750Z"
+                }
+            ],
+            "classTitle": "longitudinal crack",
+            "points": {
+                "exterior": [
+                    [
+                        339,
+                        530
+                    ],
+                    [
+                        407,
+                        605
+                    ]
+                ],
+                "interior": []
+            }
+        }
+    ]
+}

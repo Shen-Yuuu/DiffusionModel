@@ -1,0 +1,125 @@
+{
+    "description": "",
+    "tags": [
+        {
+            "id": 16555047,
+            "tagId": 29663,
+            "name": "Japan",
+            "value": null,
+            "labelerLogin": "inbox@datasetninja.com",
+            "createdAt": "2024-01-22T15:36:14.545Z",
+            "updatedAt": "2024-01-22T15:36:14.545Z"
+        }
+    ],
+    "size": {
+        "height": 600,
+        "width": 600
+    },
+    "objects": [
+        {
+            "id": 138960943,
+            "classId": 6512001,
+            "objectId": null,
+            "description": "",
+            "geometryType": "rectangle",
+            "labelerLogin": "inbox@datasetninja.com",
+            "createdAt": "2024-01-22T15:36:14.547Z",
+            "updatedAt": "2024-01-22T15:36:14.547Z",
+            "tags": [
+                {
+                    "id": 104947869,
+                    "tagId": 29666,
+                    "name": "detail",
+                    "value": "partial pavement, overall pavement",
+                    "labelerLogin": "inbox@datasetninja.com",
+                    "createdAt": "2024-01-22T15:36:14.547Z",
+                    "updatedAt": "2024-01-22T15:36:14.547Z"
+                }
+            ],
+            "classTitle": "alligator crack",
+            "points": {
+                "exterior": [
+                    [
+                        122,
+                        385
+                    ],
+                    [
+                        411,
+                        599
+                    ]
+                ],
+                "interior": []
+            }
+        },
+        {
+            "id": 138960942,
+            "classId": 6512000,
+            "objectId": null,
+            "description": "",
+            "geometryType": "rectangle",
+            "labelerLogin": "inbox@datasetninja.com",
+            "createdAt": "2024-01-22T15:36:14.546Z",
+            "updatedAt": "2024-01-22T15:36:14.546Z",
+            "tags": [
+                {
+                    "id": 104947868,
+                    "tagId": 29666,
+                    "name": "detail",
+                    "value": "equal interval",
+                    "labelerLogin": "inbox@datasetninja.com",
+                    "createdAt": "2024-01-22T15:36:14.546Z",
+                    "updatedAt": "2024-01-22T15:36:14.546Z"
+                }
+            ],
+            "classTitle": "transverse crack",
+            "points": {
+                "exterior": [
+                    [
+                        398,
+                        534
+                    ],
+                    [
+                        597,
+                        567
+                    ]
+                ],
+                "interior": []
+            }
+        },
+        {
+            "id": 138960941,
+            "classId": 6512000,
+            "objectId": null,
+            "description": "",
+            "geometryType": "rectangle",
+            "labelerLogin": "inbox@datasetninja.com",
+            "createdAt": "2024-01-22T15:36:14.546Z",
+            "updatedAt": "2024-01-22T15:36:14.546Z",
+            "tags": [
+                {
+                    "id": 104947867,
+                    "tagId": 29666,
+                    "name": "detail",
+                    "value": "equal interval",
+                    "labelerLogin": "inbox@datasetninja.com",
+                    "createdAt": "2024-01-22T15:36:14.546Z",
+                    "updatedAt": "2024-01-22T15:36:14.546Z"
+                }
+            ],
+            "classTitle": "transverse crack",
+            "points": {
+                "exterior": [
+                    [
+                        373,
+                        427
+                    ],
+                    [
+                        569,
+                        461
+                    ]
+                ],
+                "interior": []
+            }
+        }
+    ]
+}

@@ -1,0 +1,55 @@
+{
+    "description": "",
+    "tags": [
+        {
+            "id": 16575772,
+            "tagId": 29661,
+            "name": "Czech",
+            "value": null,
+            "labelerLogin": "inbox@datasetninja.com",
+            "createdAt": "2024-01-22T16:01:25.982Z",
+            "updatedAt": "2024-01-22T16:01:25.982Z"
+        }
+    ],
+    "size": {
+        "height": 600,
+        "width": 600
+    },
+    "objects": [
+        {
+            "id": 138984310,
+            "classId": 6511999,
+            "objectId": null,
+            "description": "",
+            "geometryType": "rectangle",
+            "labelerLogin": "inbox@datasetninja.com",
+            "createdAt": "2024-01-22T16:01:25.983Z",
+            "updatedAt": "2024-01-22T16:01:25.983Z",
+            "tags": [
+                {
+                    "id": 104971236,
+                    "tagId": 29666,
+                    "name": "detail",
+                    "value": "wheel mark part",
+                    "labelerLogin": "inbox@datasetninja.com",
+                    "createdAt": "2024-01-22T16:01:25.983Z",
+                    "updatedAt": "2024-01-22T16:01:25.983Z"
+                }
+            ],
+            "classTitle": "longitudinal crack",
+            "points": {
+                "exterior": [
+                    [
+                        307,
+                        417
+                    ],
+                    [
+                        376,
+                        523
+                    ]
+                ],
+                "interior": []
+            }
+        }
+    ]
+}

@@ -1,0 +1,90 @@
+{
+    "description": "",
+    "tags": [
+        {
+            "id": 16574979,
+            "tagId": 29661,
+            "name": "Czech",
+            "value": null,
+            "labelerLogin": "inbox@datasetninja.com",
+            "createdAt": "2024-01-22T15:58:55.213Z",
+            "updatedAt": "2024-01-22T15:58:55.213Z"
+        }
+    ],
+    "size": {
+        "height": 600,
+        "width": 600
+    },
+    "objects": [
+        {
+            "id": 138983802,
+            "classId": 6512000,
+            "objectId": null,
+            "description": "",
+            "geometryType": "rectangle",
+            "labelerLogin": "inbox@datasetninja.com",
+            "createdAt": "2024-01-22T15:58:55.217Z",
+            "updatedAt": "2024-01-22T15:58:55.217Z",
+            "tags": [
+                {
+                    "id": 104970728,
+                    "tagId": 29666,
+                    "name": "detail",
+                    "value": "equal interval",
+                    "labelerLogin": "inbox@datasetninja.com",
+                    "createdAt": "2024-01-22T15:58:55.216Z",
+                    "updatedAt": "2024-01-22T15:58:55.216Z"
+                }
+            ],
+            "classTitle": "transverse crack",
+            "points": {
+                "exterior": [
+                    [
+                        227,
+                        462
+                    ],
+                    [
+                        388,
+                        483
+                    ]
+                ],
+                "interior": []
+            }
+        },
+        {
+            "id": 138983801,
+            "classId": 6512000,
+            "objectId": null,
+            "description": "",
+            "geometryType": "rectangle",
+            "labelerLogin": "inbox@datasetninja.com",
+            "createdAt": "2024-01-22T15:58:55.215Z",
+            "updatedAt": "2024-01-22T15:58:55.215Z",
+            "tags": [
+                {
+                    "id": 104970727,
+                    "tagId": 29666,
+                    "name": "detail",
+                    "value": "equal interval",
+                    "labelerLogin": "inbox@datasetninja.com",
+                    "createdAt": "2024-01-22T15:58:55.214Z",
+                    "updatedAt": "2024-01-22T15:58:55.214Z"
+                }
+            ],
+            "classTitle": "transverse crack",
+            "points": {
+                "exterior": [
+                    [
+                        218,
+                        428
+                    ],
+                    [
+                        379,
+                        449
+                    ]
+                ],
+                "interior": []
+            }
+        }
+    ]
+}

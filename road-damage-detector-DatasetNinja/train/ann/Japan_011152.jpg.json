@@ -1,0 +1,90 @@
+{
+    "description": "",
+    "tags": [
+        {
+            "id": 16549455,
+            "tagId": 29663,
+            "name": "Japan",
+            "value": null,
+            "labelerLogin": "inbox@datasetninja.com",
+            "createdAt": "2024-01-22T15:27:43.380Z",
+            "updatedAt": "2024-01-22T15:27:43.380Z"
+        }
+    ],
+    "size": {
+        "height": 600,
+        "width": 600
+    },
+    "objects": [
+        {
+            "id": 138949701,
+            "classId": 6512001,
+            "objectId": null,
+            "description": "",
+            "geometryType": "rectangle",
+            "labelerLogin": "inbox@datasetninja.com",
+            "createdAt": "2024-01-22T15:27:43.382Z",
+            "updatedAt": "2024-01-22T15:27:43.382Z",
+            "tags": [
+                {
+                    "id": 104936627,
+                    "tagId": 29666,
+                    "name": "detail",
+                    "value": "partial pavement, overall pavement",
+                    "labelerLogin": "inbox@datasetninja.com",
+                    "createdAt": "2024-01-22T15:27:43.382Z",
+                    "updatedAt": "2024-01-22T15:27:43.382Z"
+                }
+            ],
+            "classTitle": "alligator crack",
+            "points": {
+                "exterior": [
+                    [
+                        28,
+                        392
+                    ],
+                    [
+                        463,
+                        597
+                    ]
+                ],
+                "interior": []
+            }
+        },
+        {
+            "id": 138949700,
+            "classId": 6512001,
+            "objectId": null,
+            "description": "",
+            "geometryType": "rectangle",
+            "labelerLogin": "inbox@datasetninja.com",
+            "createdAt": "2024-01-22T15:27:43.381Z",
+            "updatedAt": "2024-01-22T15:27:43.381Z",
+            "tags": [
+                {
+                    "id": 104936626,
+                    "tagId": 29666,
+                    "name": "detail",
+                    "value": "partial pavement, overall pavement",
+                    "labelerLogin": "inbox@datasetninja.com",
+                    "createdAt": "2024-01-22T15:27:43.380Z",
+                    "updatedAt": "2024-01-22T15:27:43.380Z"
+                }
+            ],
+            "classTitle": "alligator crack",
+            "points": {
+                "exterior": [
+                    [
+                        150,
+                        347
+                    ],
+                    [
+                        232,
+                        375
+                    ]
+                ],
+                "interior": []
+            }
+        }
+    ]
+}

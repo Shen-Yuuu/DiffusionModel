@@ -1,0 +1,90 @@
+{
+    "description": "",
+    "tags": [
+        {
+            "id": 16549067,
+            "tagId": 29663,
+            "name": "Japan",
+            "value": null,
+            "labelerLogin": "inbox@datasetninja.com",
+            "createdAt": "2024-01-22T15:27:20.157Z",
+            "updatedAt": "2024-01-22T15:27:20.157Z"
+        }
+    ],
+    "size": {
+        "height": 600,
+        "width": 600
+    },
+    "objects": [
+        {
+            "id": 138948918,
+            "classId": 6512003,
+            "objectId": null,
+            "description": "",
+            "geometryType": "rectangle",
+            "labelerLogin": "inbox@datasetninja.com",
+            "createdAt": "2024-01-22T15:27:20.159Z",
+            "updatedAt": "2024-01-22T15:27:20.159Z",
+            "tags": [
+                {
+                    "id": 104935844,
+                    "tagId": 29666,
+                    "name": "detail",
+                    "value": "crosswalk blur",
+                    "labelerLogin": "inbox@datasetninja.com",
+                    "createdAt": "2024-01-22T15:27:20.158Z",
+                    "updatedAt": "2024-01-22T15:27:20.158Z"
+                }
+            ],
+            "classTitle": "other corruption",
+            "points": {
+                "exterior": [
+                    [
+                        76,
+                        364
+                    ],
+                    [
+                        408,
+                        443
+                    ]
+                ],
+                "interior": []
+            }
+        },
+        {
+            "id": 138948917,
+            "classId": 6511999,
+            "objectId": null,
+            "description": "",
+            "geometryType": "rectangle",
+            "labelerLogin": "inbox@datasetninja.com",
+            "createdAt": "2024-01-22T15:27:20.158Z",
+            "updatedAt": "2024-01-22T15:27:20.158Z",
+            "tags": [
+                {
+                    "id": 104935843,
+                    "tagId": 29666,
+                    "name": "detail",
+                    "value": "wheel mark part",
+                    "labelerLogin": "inbox@datasetninja.com",
+                    "createdAt": "2024-01-22T15:27:20.158Z",
+                    "updatedAt": "2024-01-22T15:27:20.158Z"
+                }
+            ],
+            "classTitle": "longitudinal crack",
+            "points": {
+                "exterior": [
+                    [
+                        371,
+                        554
+                    ],
+                    [
+                        393,
+                        599
+                    ]
+                ],
+                "interior": []
+            }
+        }
+    ]
+}

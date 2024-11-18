@@ -1,0 +1,55 @@
+{
+    "description": "",
+    "tags": [
+        {
+            "id": 16570365,
+            "tagId": 29660,
+            "name": "China_MotorBike",
+            "value": null,
+            "labelerLogin": "inbox@datasetninja.com",
+            "createdAt": "2024-01-22T15:52:00.136Z",
+            "updatedAt": "2024-01-22T15:52:00.136Z"
+        }
+    ],
+    "size": {
+        "height": 512,
+        "width": 512
+    },
+    "objects": [
+        {
+            "id": 138979282,
+            "classId": 6512001,
+            "objectId": null,
+            "description": "",
+            "geometryType": "rectangle",
+            "labelerLogin": "inbox@datasetninja.com",
+            "createdAt": "2024-01-22T15:52:00.138Z",
+            "updatedAt": "2024-01-22T15:52:00.138Z",
+            "tags": [
+                {
+                    "id": 104966208,
+                    "tagId": 29666,
+                    "name": "detail",
+                    "value": "partial pavement, overall pavement",
+                    "labelerLogin": "inbox@datasetninja.com",
+                    "createdAt": "2024-01-22T15:52:00.138Z",
+                    "updatedAt": "2024-01-22T15:52:00.138Z"
+                }
+            ],
+            "classTitle": "alligator crack",
+            "points": {
+                "exterior": [
+                    [
+                        1,
+                        243
+                    ],
+                    [
+                        511,
+                        404
+                    ]
+                ],
+                "interior": []
+            }
+        }
+    ]
+}

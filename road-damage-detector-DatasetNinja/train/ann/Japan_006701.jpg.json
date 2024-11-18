@@ -1,0 +1,55 @@
+{
+    "description": "",
+    "tags": [
+        {
+            "id": 16547833,
+            "tagId": 29663,
+            "name": "Japan",
+            "value": null,
+            "labelerLogin": "inbox@datasetninja.com",
+            "createdAt": "2024-01-22T15:24:44.894Z",
+            "updatedAt": "2024-01-22T15:24:44.894Z"
+        }
+    ],
+    "size": {
+        "height": 600,
+        "width": 600
+    },
+    "objects": [
+        {
+            "id": 138946464,
+            "classId": 6512000,
+            "objectId": null,
+            "description": "",
+            "geometryType": "rectangle",
+            "labelerLogin": "inbox@datasetninja.com",
+            "createdAt": "2024-01-22T15:24:44.896Z",
+            "updatedAt": "2024-01-22T15:24:44.896Z",
+            "tags": [
+                {
+                    "id": 104933390,
+                    "tagId": 29666,
+                    "name": "detail",
+                    "value": "equal interval",
+                    "labelerLogin": "inbox@datasetninja.com",
+                    "createdAt": "2024-01-22T15:24:44.895Z",
+                    "updatedAt": "2024-01-22T15:24:44.895Z"
+                }
+            ],
+            "classTitle": "transverse crack",
+            "points": {
+                "exterior": [
+                    [
+                        75,
+                        278
+                    ],
+                    [
+                        195,
+                        301
+                    ]
+                ],
+                "interior": []
+            }
+        }
+    ]
+}

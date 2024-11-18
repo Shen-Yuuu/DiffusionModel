@@ -1,0 +1,55 @@
+{
+    "description": "",
+    "tags": [
+        {
+            "id": 16574214,
+            "tagId": 29661,
+            "name": "Czech",
+            "value": null,
+            "labelerLogin": "inbox@datasetninja.com",
+            "createdAt": "2024-01-22T15:57:09.355Z",
+            "updatedAt": "2024-01-22T15:57:09.355Z"
+        }
+    ],
+    "size": {
+        "height": 600,
+        "width": 600
+    },
+    "objects": [
+        {
+            "id": 138983320,
+            "classId": 6512001,
+            "objectId": null,
+            "description": "",
+            "geometryType": "rectangle",
+            "labelerLogin": "inbox@datasetninja.com",
+            "createdAt": "2024-01-22T15:57:09.356Z",
+            "updatedAt": "2024-01-22T15:57:09.356Z",
+            "tags": [
+                {
+                    "id": 104970246,
+                    "tagId": 29666,
+                    "name": "detail",
+                    "value": "partial pavement, overall pavement",
+                    "labelerLogin": "inbox@datasetninja.com",
+                    "createdAt": "2024-01-22T15:57:09.356Z",
+                    "updatedAt": "2024-01-22T15:57:09.356Z"
+                }
+            ],
+            "classTitle": "alligator crack",
+            "points": {
+                "exterior": [
+                    [
+                        117,
+                        427
+                    ],
+                    [
+                        389,
+                        513
+                    ]
+                ],
+                "interior": []
+            }
+        }
+    ]
+}

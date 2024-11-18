@@ -1,0 +1,55 @@
+{
+    "description": "",
+    "tags": [
+        {
+            "id": 16548193,
+            "tagId": 29663,
+            "name": "Japan",
+            "value": null,
+            "labelerLogin": "inbox@datasetninja.com",
+            "createdAt": "2024-01-22T15:26:28.327Z",
+            "updatedAt": "2024-01-22T15:26:28.327Z"
+        }
+    ],
+    "size": {
+        "height": 600,
+        "width": 600
+    },
+    "objects": [
+        {
+            "id": 138947190,
+            "classId": 6512001,
+            "objectId": null,
+            "description": "",
+            "geometryType": "rectangle",
+            "labelerLogin": "inbox@datasetninja.com",
+            "createdAt": "2024-01-22T15:26:28.328Z",
+            "updatedAt": "2024-01-22T15:26:28.328Z",
+            "tags": [
+                {
+                    "id": 104934116,
+                    "tagId": 29666,
+                    "name": "detail",
+                    "value": "partial pavement, overall pavement",
+                    "labelerLogin": "inbox@datasetninja.com",
+                    "createdAt": "2024-01-22T15:26:28.328Z",
+                    "updatedAt": "2024-01-22T15:26:28.328Z"
+                }
+            ],
+            "classTitle": "alligator crack",
+            "points": {
+                "exterior": [
+                    [
+                        507,
+                        474
+                    ],
+                    [
+                        599,
+                        586
+                    ]
+                ],
+                "interior": []
+            }
+        }
+    ]
+}

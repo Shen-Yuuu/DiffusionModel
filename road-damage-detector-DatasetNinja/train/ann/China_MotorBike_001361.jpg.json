@@ -1,0 +1,90 @@
+{
+    "description": "",
+    "tags": [
+        {
+            "id": 16570981,
+            "tagId": 29660,
+            "name": "China_MotorBike",
+            "value": null,
+            "labelerLogin": "inbox@datasetninja.com",
+            "createdAt": "2024-01-22T15:52:39.020Z",
+            "updatedAt": "2024-01-22T15:52:39.020Z"
+        }
+    ],
+    "size": {
+        "height": 512,
+        "width": 512
+    },
+    "objects": [
+        {
+            "id": 138979960,
+            "classId": 6511999,
+            "objectId": null,
+            "description": "",
+            "geometryType": "rectangle",
+            "labelerLogin": "inbox@datasetninja.com",
+            "createdAt": "2024-01-22T15:52:39.024Z",
+            "updatedAt": "2024-01-22T15:52:39.024Z",
+            "tags": [
+                {
+                    "id": 104966886,
+                    "tagId": 29666,
+                    "name": "detail",
+                    "value": "wheel mark part",
+                    "labelerLogin": "inbox@datasetninja.com",
+                    "createdAt": "2024-01-22T15:52:39.024Z",
+                    "updatedAt": "2024-01-22T15:52:39.024Z"
+                }
+            ],
+            "classTitle": "longitudinal crack",
+            "points": {
+                "exterior": [
+                    [
+                        273,
+                        44
+                    ],
+                    [
+                        415,
+                        497
+                    ]
+                ],
+                "interior": []
+            }
+        },
+        {
+            "id": 138979959,
+            "classId": 6511999,
+            "objectId": null,
+            "description": "",
+            "geometryType": "rectangle",
+            "labelerLogin": "inbox@datasetninja.com",
+            "createdAt": "2024-01-22T15:52:39.023Z",
+            "updatedAt": "2024-01-22T15:52:39.023Z",
+            "tags": [
+                {
+                    "id": 104966885,
+                    "tagId": 29666,
+                    "name": "detail",
+                    "value": "wheel mark part",
+                    "labelerLogin": "inbox@datasetninja.com",
+                    "createdAt": "2024-01-22T15:52:39.023Z",
+                    "updatedAt": "2024-01-22T15:52:39.023Z"
+                }
+            ],
+            "classTitle": "longitudinal crack",
+            "points": {
+                "exterior": [
+                    [
+                        9,
+                        12
+                    ],
+                    [
+                        212,
+                        467
+                    ]
+                ],
+                "interior": []
+            }
+        }
+    ]
+}

@@ -1,0 +1,90 @@
+{
+    "description": "",
+    "tags": [
+        {
+            "id": 16582697,
+            "tagId": 29662,
+            "name": "India",
+            "value": null,
+            "labelerLogin": "inbox@datasetninja.com",
+            "createdAt": "2024-01-22T16:15:13.890Z",
+            "updatedAt": "2024-01-22T16:15:13.890Z"
+        }
+    ],
+    "size": {
+        "height": 720,
+        "width": 720
+    },
+    "objects": [
+        {
+            "id": 138997404,
+            "classId": 6512001,
+            "objectId": null,
+            "description": "",
+            "geometryType": "rectangle",
+            "labelerLogin": "inbox@datasetninja.com",
+            "createdAt": "2024-01-22T16:15:13.892Z",
+            "updatedAt": "2024-01-22T16:15:13.892Z",
+            "tags": [
+                {
+                    "id": 104984330,
+                    "tagId": 29666,
+                    "name": "detail",
+                    "value": "partial pavement, overall pavement",
+                    "labelerLogin": "inbox@datasetninja.com",
+                    "createdAt": "2024-01-22T16:15:13.892Z",
+                    "updatedAt": "2024-01-22T16:15:13.892Z"
+                }
+            ],
+            "classTitle": "alligator crack",
+            "points": {
+                "exterior": [
+                    [
+                        108,
+                        553
+                    ],
+                    [
+                        719,
+                        717
+                    ]
+                ],
+                "interior": []
+            }
+        },
+        {
+            "id": 138997403,
+            "classId": 6512003,
+            "objectId": null,
+            "description": "",
+            "geometryType": "rectangle",
+            "labelerLogin": "inbox@datasetninja.com",
+            "createdAt": "2024-01-22T16:15:13.891Z",
+            "updatedAt": "2024-01-22T16:15:13.891Z",
+            "tags": [
+                {
+                    "id": 104984329,
+                    "tagId": 29666,
+                    "name": "detail",
+                    "value": "white line blur",
+                    "labelerLogin": "inbox@datasetninja.com",
+                    "createdAt": "2024-01-22T16:15:13.891Z",
+                    "updatedAt": "2024-01-22T16:15:13.891Z"
+                }
+            ],
+            "classTitle": "other corruption",
+            "points": {
+                "exterior": [
+                    [
+                        348,
+                        630
+                    ],
+                    [
+                        400,
+                        719
+                    ]
+                ],
+                "interior": []
+            }
+        }
+    ]
+}

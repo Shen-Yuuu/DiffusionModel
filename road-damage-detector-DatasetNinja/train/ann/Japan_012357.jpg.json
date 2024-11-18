@@ -1,0 +1,265 @@
+{
+    "description": "",
+    "tags": [
+        {
+            "id": 16546849,
+            "tagId": 29663,
+            "name": "Japan",
+            "value": null,
+            "labelerLogin": "inbox@datasetninja.com",
+            "createdAt": "2024-01-22T15:23:39.467Z",
+            "updatedAt": "2024-01-22T15:23:39.467Z"
+        }
+    ],
+    "size": {
+        "height": 600,
+        "width": 600
+    },
+    "objects": [
+        {
+            "id": 138944461,
+            "classId": 6512003,
+            "objectId": null,
+            "description": "",
+            "geometryType": "rectangle",
+            "labelerLogin": "inbox@datasetninja.com",
+            "createdAt": "2024-01-22T15:23:39.473Z",
+            "updatedAt": "2024-01-22T15:23:39.473Z",
+            "tags": [
+                {
+                    "id": 104931387,
+                    "tagId": 29666,
+                    "name": "detail",
+                    "value": "white line blur",
+                    "labelerLogin": "inbox@datasetninja.com",
+                    "createdAt": "2024-01-22T15:23:39.473Z",
+                    "updatedAt": "2024-01-22T15:23:39.473Z"
+                }
+            ],
+            "classTitle": "other corruption",
+            "points": {
+                "exterior": [
+                    [
+                        497,
+                        379
+                    ],
+                    [
+                        598,
+                        468
+                    ]
+                ],
+                "interior": []
+            }
+        },
+        {
+            "id": 138944460,
+            "classId": 6512000,
+            "objectId": null,
+            "description": "",
+            "geometryType": "rectangle",
+            "labelerLogin": "inbox@datasetninja.com",
+            "createdAt": "2024-01-22T15:23:39.472Z",
+            "updatedAt": "2024-01-22T15:23:39.472Z",
+            "tags": [
+                {
+                    "id": 104931386,
+                    "tagId": 29666,
+                    "name": "detail",
+                    "value": "equal interval",
+                    "labelerLogin": "inbox@datasetninja.com",
+                    "createdAt": "2024-01-22T15:23:39.472Z",
+                    "updatedAt": "2024-01-22T15:23:39.472Z"
+                }
+            ],
+            "classTitle": "transverse crack",
+            "points": {
+                "exterior": [
+                    [
+                        502,
+                        369
+                    ],
+                    [
+                        593,
+                        389
+                    ]
+                ],
+                "interior": []
+            }
+        },
+        {
+            "id": 138944459,
+            "classId": 6512000,
+            "objectId": null,
+            "description": "",
+            "geometryType": "rectangle",
+            "labelerLogin": "inbox@datasetninja.com",
+            "createdAt": "2024-01-22T15:23:39.471Z",
+            "updatedAt": "2024-01-22T15:23:39.471Z",
+            "tags": [
+                {
+                    "id": 104931385,
+                    "tagId": 29666,
+                    "name": "detail",
+                    "value": "equal interval",
+                    "labelerLogin": "inbox@datasetninja.com",
+                    "createdAt": "2024-01-22T15:23:39.471Z",
+                    "updatedAt": "2024-01-22T15:23:39.471Z"
+                }
+            ],
+            "classTitle": "transverse crack",
+            "points": {
+                "exterior": [
+                    [
+                        9,
+                        436
+                    ],
+                    [
+                        198,
+                        465
+                    ]
+                ],
+                "interior": []
+            }
+        },
+        {
+            "id": 138944458,
+            "classId": 6511999,
+            "objectId": null,
+            "description": "",
+            "geometryType": "rectangle",
+            "labelerLogin": "inbox@datasetninja.com",
+            "createdAt": "2024-01-22T15:23:39.471Z",
+            "updatedAt": "2024-01-22T15:23:39.471Z",
+            "tags": [
+                {
+                    "id": 104931384,
+                    "tagId": 29666,
+                    "name": "detail",
+                    "value": "wheel mark part",
+                    "labelerLogin": "inbox@datasetninja.com",
+                    "createdAt": "2024-01-22T15:23:39.471Z",
+                    "updatedAt": "2024-01-22T15:23:39.471Z"
+                }
+            ],
+            "classTitle": "longitudinal crack",
+            "points": {
+                "exterior": [
+                    [
+                        428,
+                        432
+                    ],
+                    [
+                        569,
+                        585
+                    ]
+                ],
+                "interior": []
+            }
+        },
+        {
+            "id": 138944457,
+            "classId": 6512000,
+            "objectId": null,
+            "description": "",
+            "geometryType": "rectangle",
+            "labelerLogin": "inbox@datasetninja.com",
+            "createdAt": "2024-01-22T15:23:39.470Z",
+            "updatedAt": "2024-01-22T15:23:39.470Z",
+            "tags": [
+                {
+                    "id": 104931383,
+                    "tagId": 29666,
+                    "name": "detail",
+                    "value": "equal interval",
+                    "labelerLogin": "inbox@datasetninja.com",
+                    "createdAt": "2024-01-22T15:23:39.470Z",
+                    "updatedAt": "2024-01-22T15:23:39.470Z"
+                }
+            ],
+            "classTitle": "transverse crack",
+            "points": {
+                "exterior": [
+                    [
+                        419,
+                        305
+                    ],
+                    [
+                        541,
+                        323
+                    ]
+                ],
+                "interior": []
+            }
+        },
+        {
+            "id": 138944456,
+            "classId": 6512000,
+            "objectId": null,
+            "description": "",
+            "geometryType": "rectangle",
+            "labelerLogin": "inbox@datasetninja.com",
+            "createdAt": "2024-01-22T15:23:39.469Z",
+            "updatedAt": "2024-01-22T15:23:39.469Z",
+            "tags": [
+                {
+                    "id": 104931382,
+                    "tagId": 29666,
+                    "name": "detail",
+                    "value": "equal interval",
+                    "labelerLogin": "inbox@datasetninja.com",
+                    "createdAt": "2024-01-22T15:23:39.469Z",
+                    "updatedAt": "2024-01-22T15:23:39.469Z"
+                }
+            ],
+            "classTitle": "transverse crack",
+            "points": {
+                "exterior": [
+                    [
+                        326,
+                        423
+                    ],
+                    [
+                        538,
+                        444
+                    ]
+                ],
+                "interior": []
+            }
+        },
+        {
+            "id": 138944455,
+            "classId": 6512000,
+            "objectId": null,
+            "description": "",
+            "geometryType": "rectangle",
+            "labelerLogin": "inbox@datasetninja.com",
+            "createdAt": "2024-01-22T15:23:39.468Z",
+            "updatedAt": "2024-01-22T15:23:39.468Z",
+            "tags": [
+                {
+                    "id": 104931381,
+                    "tagId": 29666,
+                    "name": "detail",
+                    "value": "equal interval",
+                    "labelerLogin": "inbox@datasetninja.com",
+                    "createdAt": "2024-01-22T15:23:39.468Z",
+                    "updatedAt": "2024-01-22T15:23:39.468Z"
+                }
+            ],
+            "classTitle": "transverse crack",
+            "points": {
+                "exterior": [
+                    [
+                        483,
+                        455
+                    ],
+                    [
+                        594,
+                        486
+                    ]
+                ],
+                "interior": []
+            }
+        }
+    ]
+}

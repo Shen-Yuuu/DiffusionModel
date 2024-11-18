@@ -1,0 +1,55 @@
+{
+    "description": "",
+    "tags": [
+        {
+            "id": 16585940,
+            "tagId": 29662,
+            "name": "India",
+            "value": null,
+            "labelerLogin": "inbox@datasetninja.com",
+            "createdAt": "2024-01-22T16:21:06.229Z",
+            "updatedAt": "2024-01-22T16:21:06.229Z"
+        }
+    ],
+    "size": {
+        "height": 720,
+        "width": 720
+    },
+    "objects": [
+        {
+            "id": 139000857,
+            "classId": 6512003,
+            "objectId": null,
+            "description": "",
+            "geometryType": "rectangle",
+            "labelerLogin": "inbox@datasetninja.com",
+            "createdAt": "2024-01-22T16:21:06.230Z",
+            "updatedAt": "2024-01-22T16:21:06.230Z",
+            "tags": [
+                {
+                    "id": 104987782,
+                    "tagId": 29666,
+                    "name": "detail",
+                    "value": "white line blur",
+                    "labelerLogin": "inbox@datasetninja.com",
+                    "createdAt": "2024-01-22T16:21:06.230Z",
+                    "updatedAt": "2024-01-22T16:21:06.230Z"
+                }
+            ],
+            "classTitle": "other corruption",
+            "points": {
+                "exterior": [
+                    [
+                        520,
+                        508
+                    ],
+                    [
+                        597,
+                        592
+                    ]
+                ],
+                "interior": []
+            }
+        }
+    ]
+}

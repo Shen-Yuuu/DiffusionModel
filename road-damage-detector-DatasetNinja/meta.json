@@ -1,0 +1,143 @@
+{
+    "classes": [
+        {
+            "title": "alligator crack",
+            "shape": "rectangle",
+            "color": "#FFE119",
+            "geometry_config": {},
+            "id": 6512001,
+            "hotkey": ""
+        },
+        {
+            "title": "block crack",
+            "shape": "rectangle",
+            "color": "#478A0F",
+            "geometry_config": {},
+            "id": 6512157,
+            "hotkey": ""
+        },
+        {
+            "title": "longitudinal crack",
+            "shape": "rectangle",
+            "color": "#E6194B",
+            "geometry_config": {},
+            "id": 6511999,
+            "hotkey": ""
+        },
+        {
+            "title": "other corruption",
+            "shape": "rectangle",
+            "color": "#F58230",
+            "geometry_config": {},
+            "id": 6512003,
+            "hotkey": ""
+        },
+        {
+            "title": "pothole",
+            "shape": "rectangle",
+            "color": "#0082C8",
+            "geometry_config": {},
+            "id": 6512002,
+            "hotkey": ""
+        },
+        {
+            "title": "repair",
+            "shape": "rectangle",
+            "color": "#8A460F",
+            "geometry_config": {},
+            "id": 6512161,
+            "hotkey": ""
+        },
+        {
+            "title": "transverse crack",
+            "shape": "rectangle",
+            "color": "#3CB44B",
+            "geometry_config": {},
+            "id": 6512000,
+            "hotkey": ""
+        }
+    ],
+    "tags": [
+        {
+            "name": "China_Drone",
+            "value_type": "none",
+            "color": "#8A0F75",
+            "id": 29659,
+            "hotkey": "",
+            "applicable_type": "all",
+            "classes": []
+        },
+        {
+            "name": "China_MotorBike",
+            "value_type": "none",
+            "color": "#8A0F30",
+            "id": 29660,
+            "hotkey": "",
+            "applicable_type": "all",
+            "classes": []
+        },
+        {
+            "name": "Czech",
+            "value_type": "none",
+            "color": "#8A0F6B",
+            "id": 29661,
+            "hotkey": "",
+            "applicable_type": "all",
+            "classes": []
+        },
+        {
+            "name": "detail",
+            "value_type": "any_string",
+            "color": "#8A0F7E",
+            "id": 29666,
+            "hotkey": "",
+            "applicable_type": "all",
+            "classes": []
+        },
+        {
+            "name": "India",
+            "value_type": "none",
+            "color": "#8A290F",
+            "id": 29662,
+            "hotkey": "",
+            "applicable_type": "all",
+            "classes": []
+        },
+        {
+            "name": "Japan",
+            "value_type": "none",
+            "color": "#170F8A",
+            "id": 29663,
+            "hotkey": "",
+            "applicable_type": "all",
+            "classes": []
+        },
+        {
+            "name": "Norway",
+            "value_type": "none",
+            "color": "#0F588A",
+            "id": 29664,
+            "hotkey": "",
+            "applicable_type": "all",
+            "classes": []
+        },
+        {
+            "name": "United States",
+            "value_type": "none",
+            "color": "#8A0F38",
+            "id": 29665,
+            "hotkey": "",
+            "applicable_type": "all",
+            "classes": []
+        }
+    ],
+    "projectType": "images",
+    "projectSettings": {
+        "multiView": {
+            "enabled": false,
+            "tagName": null,
+            "tagId": null,
+            "isSynced": false
+        }
+    }
+}

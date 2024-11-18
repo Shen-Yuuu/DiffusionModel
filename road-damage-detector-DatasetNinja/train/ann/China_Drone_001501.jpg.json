@@ -1,0 +1,55 @@
+{
+    "description": "",
+    "tags": [
+        {
+            "id": 16560086,
+            "tagId": 29659,
+            "name": "China_Drone",
+            "value": null,
+            "labelerLogin": "inbox@datasetninja.com",
+            "createdAt": "2024-01-22T15:40:13.931Z",
+            "updatedAt": "2024-01-22T15:40:13.931Z"
+        }
+    ],
+    "size": {
+        "height": 512,
+        "width": 512
+    },
+    "objects": [
+        {
+            "id": 138966209,
+            "classId": 6512000,
+            "objectId": null,
+            "description": "",
+            "geometryType": "rectangle",
+            "labelerLogin": "inbox@datasetninja.com",
+            "createdAt": "2024-01-22T15:40:13.932Z",
+            "updatedAt": "2024-01-22T15:40:13.932Z",
+            "tags": [
+                {
+                    "id": 104953135,
+                    "tagId": 29666,
+                    "name": "detail",
+                    "value": "equal interval",
+                    "labelerLogin": "inbox@datasetninja.com",
+                    "createdAt": "2024-01-22T15:40:13.931Z",
+                    "updatedAt": "2024-01-22T15:40:13.931Z"
+                }
+            ],
+            "classTitle": "transverse crack",
+            "points": {
+                "exterior": [
+                    [
+                        1,
+                        285
+                    ],
+                    [
+                        209,
+                        317
+                    ]
+                ],
+                "interior": []
+            }
+        }
+    ]
+}

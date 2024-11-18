@@ -1,0 +1,55 @@
+{
+    "description": "",
+    "tags": [
+        {
+            "id": 16557738,
+            "tagId": 29659,
+            "name": "China_Drone",
+            "value": null,
+            "labelerLogin": "inbox@datasetninja.com",
+            "createdAt": "2024-01-22T15:38:52.172Z",
+            "updatedAt": "2024-01-22T15:38:52.172Z"
+        }
+    ],
+    "size": {
+        "height": 512,
+        "width": 512
+    },
+    "objects": [
+        {
+            "id": 138964689,
+            "classId": 6511999,
+            "objectId": null,
+            "description": "",
+            "geometryType": "rectangle",
+            "labelerLogin": "inbox@datasetninja.com",
+            "createdAt": "2024-01-22T15:38:52.174Z",
+            "updatedAt": "2024-01-22T15:38:52.174Z",
+            "tags": [
+                {
+                    "id": 104951615,
+                    "tagId": 29666,
+                    "name": "detail",
+                    "value": "wheel mark part",
+                    "labelerLogin": "inbox@datasetninja.com",
+                    "createdAt": "2024-01-22T15:38:52.173Z",
+                    "updatedAt": "2024-01-22T15:38:52.173Z"
+                }
+            ],
+            "classTitle": "longitudinal crack",
+            "points": {
+                "exterior": [
+                    [
+                        209,
+                        179
+                    ],
+                    [
+                        245,
+                        511
+                    ]
+                ],
+                "interior": []
+            }
+        }
+    ]
+}

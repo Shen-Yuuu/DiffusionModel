@@ -1,0 +1,125 @@
+{
+    "description": "",
+    "tags": [
+        {
+            "id": 16550010,
+            "tagId": 29663,
+            "name": "Japan",
+            "value": null,
+            "labelerLogin": "inbox@datasetninja.com",
+            "createdAt": "2024-01-22T15:28:15.177Z",
+            "updatedAt": "2024-01-22T15:28:15.177Z"
+        }
+    ],
+    "size": {
+        "height": 600,
+        "width": 600
+    },
+    "objects": [
+        {
+            "id": 138950840,
+            "classId": 6512003,
+            "objectId": null,
+            "description": "",
+            "geometryType": "rectangle",
+            "labelerLogin": "inbox@datasetninja.com",
+            "createdAt": "2024-01-22T15:28:15.179Z",
+            "updatedAt": "2024-01-22T15:28:15.179Z",
+            "tags": [
+                {
+                    "id": 104937766,
+                    "tagId": 29666,
+                    "name": "detail",
+                    "value": "white line blur",
+                    "labelerLogin": "inbox@datasetninja.com",
+                    "createdAt": "2024-01-22T15:28:15.179Z",
+                    "updatedAt": "2024-01-22T15:28:15.179Z"
+                }
+            ],
+            "classTitle": "other corruption",
+            "points": {
+                "exterior": [
+                    [
+                        7,
+                        365
+                    ],
+                    [
+                        220,
+                        570
+                    ]
+                ],
+                "interior": []
+            }
+        },
+        {
+            "id": 138950839,
+            "classId": 6512003,
+            "objectId": null,
+            "description": "",
+            "geometryType": "rectangle",
+            "labelerLogin": "inbox@datasetninja.com",
+            "createdAt": "2024-01-22T15:28:15.178Z",
+            "updatedAt": "2024-01-22T15:28:15.178Z",
+            "tags": [
+                {
+                    "id": 104937765,
+                    "tagId": 29666,
+                    "name": "detail",
+                    "value": "white line blur",
+                    "labelerLogin": "inbox@datasetninja.com",
+                    "createdAt": "2024-01-22T15:28:15.178Z",
+                    "updatedAt": "2024-01-22T15:28:15.178Z"
+                }
+            ],
+            "classTitle": "other corruption",
+            "points": {
+                "exterior": [
+                    [
+                        315,
+                        375
+                    ],
+                    [
+                        591,
+                        588
+                    ]
+                ],
+                "interior": []
+            }
+        },
+        {
+            "id": 138950838,
+            "classId": 6512000,
+            "objectId": null,
+            "description": "",
+            "geometryType": "rectangle",
+            "labelerLogin": "inbox@datasetninja.com",
+            "createdAt": "2024-01-22T15:28:15.178Z",
+            "updatedAt": "2024-01-22T15:28:15.178Z",
+            "tags": [
+                {
+                    "id": 104937764,
+                    "tagId": 29666,
+                    "name": "detail",
+                    "value": "equal interval",
+                    "labelerLogin": "inbox@datasetninja.com",
+                    "createdAt": "2024-01-22T15:28:15.178Z",
+                    "updatedAt": "2024-01-22T15:28:15.178Z"
+                }
+            ],
+            "classTitle": "transverse crack",
+            "points": {
+                "exterior": [
+                    [
+                        169,
+                        476
+                    ],
+                    [
+                        243,
+                        489
+                    ]
+                ],
+                "interior": []
+            }
+        }
+    ]
+}

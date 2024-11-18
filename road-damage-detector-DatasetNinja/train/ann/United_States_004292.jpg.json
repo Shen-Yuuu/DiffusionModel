@@ -1,0 +1,55 @@
+{
+    "description": "",
+    "tags": [
+        {
+            "id": 16580583,
+            "tagId": 29665,
+            "name": "United States",
+            "value": null,
+            "labelerLogin": "inbox@datasetninja.com",
+            "createdAt": "2024-01-22T16:11:31.792Z",
+            "updatedAt": "2024-01-22T16:11:31.792Z"
+        }
+    ],
+    "size": {
+        "height": 640,
+        "width": 640
+    },
+    "objects": [
+        {
+            "id": 138994492,
+            "classId": 6512000,
+            "objectId": null,
+            "description": "",
+            "geometryType": "rectangle",
+            "labelerLogin": "inbox@datasetninja.com",
+            "createdAt": "2024-01-22T16:11:31.793Z",
+            "updatedAt": "2024-01-22T16:11:31.793Z",
+            "tags": [
+                {
+                    "id": 104981418,
+                    "tagId": 29666,
+                    "name": "detail",
+                    "value": "equal interval",
+                    "labelerLogin": "inbox@datasetninja.com",
+                    "createdAt": "2024-01-22T16:11:31.793Z",
+                    "updatedAt": "2024-01-22T16:11:31.793Z"
+                }
+            ],
+            "classTitle": "transverse crack",
+            "points": {
+                "exterior": [
+                    [
+                        9,
+                        422
+                    ],
+                    [
+                        326,
+                        460
+                    ]
+                ],
+                "interior": []
+            }
+        }
+    ]
+}

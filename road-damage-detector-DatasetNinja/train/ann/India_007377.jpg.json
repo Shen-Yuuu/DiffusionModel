@@ -1,0 +1,90 @@
+{
+    "description": "",
+    "tags": [
+        {
+            "id": 16582620,
+            "tagId": 29662,
+            "name": "India",
+            "value": null,
+            "labelerLogin": "inbox@datasetninja.com",
+            "createdAt": "2024-01-22T16:15:04.341Z",
+            "updatedAt": "2024-01-22T16:15:04.341Z"
+        }
+    ],
+    "size": {
+        "height": 720,
+        "width": 720
+    },
+    "objects": [
+        {
+            "id": 138997322,
+            "classId": 6512001,
+            "objectId": null,
+            "description": "",
+            "geometryType": "rectangle",
+            "labelerLogin": "inbox@datasetninja.com",
+            "createdAt": "2024-01-22T16:15:04.342Z",
+            "updatedAt": "2024-01-22T16:15:04.342Z",
+            "tags": [
+                {
+                    "id": 104984248,
+                    "tagId": 29666,
+                    "name": "detail",
+                    "value": "partial pavement, overall pavement",
+                    "labelerLogin": "inbox@datasetninja.com",
+                    "createdAt": "2024-01-22T16:15:04.342Z",
+                    "updatedAt": "2024-01-22T16:15:04.342Z"
+                }
+            ],
+            "classTitle": "alligator crack",
+            "points": {
+                "exterior": [
+                    [
+                        1,
+                        568
+                    ],
+                    [
+                        537,
+                        701
+                    ]
+                ],
+                "interior": []
+            }
+        },
+        {
+            "id": 138997321,
+            "classId": 6512003,
+            "objectId": null,
+            "description": "",
+            "geometryType": "rectangle",
+            "labelerLogin": "inbox@datasetninja.com",
+            "createdAt": "2024-01-22T16:15:04.341Z",
+            "updatedAt": "2024-01-22T16:15:04.341Z",
+            "tags": [
+                {
+                    "id": 104984247,
+                    "tagId": 29666,
+                    "name": "detail",
+                    "value": "crosswalk blur",
+                    "labelerLogin": "inbox@datasetninja.com",
+                    "createdAt": "2024-01-22T16:15:04.341Z",
+                    "updatedAt": "2024-01-22T16:15:04.341Z"
+                }
+            ],
+            "classTitle": "other corruption",
+            "points": {
+                "exterior": [
+                    [
+                        1,
+                        569
+                    ],
+                    [
+                        569,
+                        719
+                    ]
+                ],
+                "interior": []
+            }
+        }
+    ]
+}

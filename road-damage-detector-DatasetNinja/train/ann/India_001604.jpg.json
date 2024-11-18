@@ -1,0 +1,195 @@
+{
+    "description": "",
+    "tags": [
+        {
+            "id": 16584059,
+            "tagId": 29662,
+            "name": "India",
+            "value": null,
+            "labelerLogin": "inbox@datasetninja.com",
+            "createdAt": "2024-01-22T16:17:33.599Z",
+            "updatedAt": "2024-01-22T16:17:33.599Z"
+        }
+    ],
+    "size": {
+        "height": 720,
+        "width": 720
+    },
+    "objects": [
+        {
+            "id": 138998901,
+            "classId": 6512001,
+            "objectId": null,
+            "description": "",
+            "geometryType": "rectangle",
+            "labelerLogin": "inbox@datasetninja.com",
+            "createdAt": "2024-01-22T16:17:33.611Z",
+            "updatedAt": "2024-01-22T16:17:33.611Z",
+            "tags": [
+                {
+                    "id": 104985827,
+                    "tagId": 29666,
+                    "name": "detail",
+                    "value": "partial pavement, overall pavement",
+                    "labelerLogin": "inbox@datasetninja.com",
+                    "createdAt": "2024-01-22T16:17:33.611Z",
+                    "updatedAt": "2024-01-22T16:17:33.611Z"
+                }
+            ],
+            "classTitle": "alligator crack",
+            "points": {
+                "exterior": [
+                    [
+                        443,
+                        509
+                    ],
+                    [
+                        574,
+                        545
+                    ]
+                ],
+                "interior": []
+            }
+        },
+        {
+            "id": 138998900,
+            "classId": 6512001,
+            "objectId": null,
+            "description": "",
+            "geometryType": "rectangle",
+            "labelerLogin": "inbox@datasetninja.com",
+            "createdAt": "2024-01-22T16:17:33.610Z",
+            "updatedAt": "2024-01-22T16:17:33.610Z",
+            "tags": [
+                {
+                    "id": 104985826,
+                    "tagId": 29666,
+                    "name": "detail",
+                    "value": "partial pavement, overall pavement",
+                    "labelerLogin": "inbox@datasetninja.com",
+                    "createdAt": "2024-01-22T16:17:33.609Z",
+                    "updatedAt": "2024-01-22T16:17:33.609Z"
+                }
+            ],
+            "classTitle": "alligator crack",
+            "points": {
+                "exterior": [
+                    [
+                        502,
+                        550
+                    ],
+                    [
+                        719,
+                        719
+                    ]
+                ],
+                "interior": []
+            }
+        },
+        {
+            "id": 138998899,
+            "classId": 6511999,
+            "objectId": null,
+            "description": "",
+            "geometryType": "rectangle",
+            "labelerLogin": "inbox@datasetninja.com",
+            "createdAt": "2024-01-22T16:17:33.608Z",
+            "updatedAt": "2024-01-22T16:17:33.608Z",
+            "tags": [
+                {
+                    "id": 104985825,
+                    "tagId": 29666,
+                    "name": "detail",
+                    "value": "wheel mark part",
+                    "labelerLogin": "inbox@datasetninja.com",
+                    "createdAt": "2024-01-22T16:17:33.608Z",
+                    "updatedAt": "2024-01-22T16:17:33.608Z"
+                }
+            ],
+            "classTitle": "longitudinal crack",
+            "points": {
+                "exterior": [
+                    [
+                        404,
+                        488
+                    ],
+                    [
+                        512,
+                        704
+                    ]
+                ],
+                "interior": []
+            }
+        },
+        {
+            "id": 138998898,
+            "classId": 6512002,
+            "objectId": null,
+            "description": "",
+            "geometryType": "rectangle",
+            "labelerLogin": "inbox@datasetninja.com",
+            "createdAt": "2024-01-22T16:17:33.604Z",
+            "updatedAt": "2024-01-22T16:17:33.604Z",
+            "tags": [
+                {
+                    "id": 104985824,
+                    "tagId": 29666,
+                    "name": "detail",
+                    "value": "rutting, bump, pothole, separation",
+                    "labelerLogin": "inbox@datasetninja.com",
+                    "createdAt": "2024-01-22T16:17:33.604Z",
+                    "updatedAt": "2024-01-22T16:17:33.604Z"
+                }
+            ],
+            "classTitle": "pothole",
+            "points": {
+                "exterior": [
+                    [
+                        410,
+                        567
+                    ],
+                    [
+                        445,
+                        619
+                    ]
+                ],
+                "interior": []
+            }
+        },
+        {
+            "id": 138998897,
+            "classId": 6512002,
+            "objectId": null,
+            "description": "",
+            "geometryType": "rectangle",
+            "labelerLogin": "inbox@datasetninja.com",
+            "createdAt": "2024-01-22T16:17:33.600Z",
+            "updatedAt": "2024-01-22T16:17:33.600Z",
+            "tags": [
+                {
+                    "id": 104985823,
+                    "tagId": 29666,
+                    "name": "detail",
+                    "value": "rutting, bump, pothole, separation",
+                    "labelerLogin": "inbox@datasetninja.com",
+                    "createdAt": "2024-01-22T16:17:33.599Z",
+                    "updatedAt": "2024-01-22T16:17:33.599Z"
+                }
+            ],
+            "classTitle": "pothole",
+            "points": {
+                "exterior": [
+                    [
+                        444,
+                        626
+                    ],
+                    [
+                        498,
+                        687
+                    ]
+                ],
+                "interior": []
+            }
+        }
+    ]
+}

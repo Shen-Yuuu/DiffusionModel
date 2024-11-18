@@ -1,0 +1,55 @@
+{
+    "description": "",
+    "tags": [
+        {
+            "id": 16552860,
+            "tagId": 29663,
+            "name": "Japan",
+            "value": null,
+            "labelerLogin": "inbox@datasetninja.com",
+            "createdAt": "2024-01-22T15:33:18.644Z",
+            "updatedAt": "2024-01-22T15:33:18.644Z"
+        }
+    ],
+    "size": {
+        "height": 600,
+        "width": 600
+    },
+    "objects": [
+        {
+            "id": 138956559,
+            "classId": 6512003,
+            "objectId": null,
+            "description": "",
+            "geometryType": "rectangle",
+            "labelerLogin": "inbox@datasetninja.com",
+            "createdAt": "2024-01-22T15:33:18.645Z",
+            "updatedAt": "2024-01-22T15:33:18.645Z",
+            "tags": [
+                {
+                    "id": 104943485,
+                    "tagId": 29666,
+                    "name": "detail",
+                    "value": "white line blur",
+                    "labelerLogin": "inbox@datasetninja.com",
+                    "createdAt": "2024-01-22T15:33:18.644Z",
+                    "updatedAt": "2024-01-22T15:33:18.644Z"
+                }
+            ],
+            "classTitle": "other corruption",
+            "points": {
+                "exterior": [
+                    [
+                        516,
+                        468
+                    ],
+                    [
+                        599,
+                        594
+                    ]
+                ],
+                "interior": []
+            }
+        }
+    ]
+}

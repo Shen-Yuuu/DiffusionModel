@@ -1,0 +1,90 @@
+{
+    "description": "",
+    "tags": [
+        {
+            "id": 16549869,
+            "tagId": 29663,
+            "name": "Japan",
+            "value": null,
+            "labelerLogin": "inbox@datasetninja.com",
+            "createdAt": "2024-01-22T15:28:08.378Z",
+            "updatedAt": "2024-01-22T15:28:08.378Z"
+        }
+    ],
+    "size": {
+        "height": 600,
+        "width": 600
+    },
+    "objects": [
+        {
+            "id": 138950537,
+            "classId": 6512003,
+            "objectId": null,
+            "description": "",
+            "geometryType": "rectangle",
+            "labelerLogin": "inbox@datasetninja.com",
+            "createdAt": "2024-01-22T15:28:08.380Z",
+            "updatedAt": "2024-01-22T15:28:08.380Z",
+            "tags": [
+                {
+                    "id": 104937463,
+                    "tagId": 29666,
+                    "name": "detail",
+                    "value": "white line blur",
+                    "labelerLogin": "inbox@datasetninja.com",
+                    "createdAt": "2024-01-22T15:28:08.380Z",
+                    "updatedAt": "2024-01-22T15:28:08.380Z"
+                }
+            ],
+            "classTitle": "other corruption",
+            "points": {
+                "exterior": [
+                    [
+                        217,
+                        342
+                    ],
+                    [
+                        341,
+                        594
+                    ]
+                ],
+                "interior": []
+            }
+        },
+        {
+            "id": 138950536,
+            "classId": 6512003,
+            "objectId": null,
+            "description": "",
+            "geometryType": "rectangle",
+            "labelerLogin": "inbox@datasetninja.com",
+            "createdAt": "2024-01-22T15:28:08.379Z",
+            "updatedAt": "2024-01-22T15:28:08.379Z",
+            "tags": [
+                {
+                    "id": 104937462,
+                    "tagId": 29666,
+                    "name": "detail",
+                    "value": "white line blur",
+                    "labelerLogin": "inbox@datasetninja.com",
+                    "createdAt": "2024-01-22T15:28:08.379Z",
+                    "updatedAt": "2024-01-22T15:28:08.379Z"
+                }
+            ],
+            "classTitle": "other corruption",
+            "points": {
+                "exterior": [
+                    [
+                        502,
+                        401
+                    ],
+                    [
+                        599,
+                        480
+                    ]
+                ],
+                "interior": []
+            }
+        }
+    ]
+}

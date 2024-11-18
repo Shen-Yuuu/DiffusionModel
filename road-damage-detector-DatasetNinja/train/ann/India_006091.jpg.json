@@ -1,0 +1,55 @@
+{
+    "description": "",
+    "tags": [
+        {
+            "id": 16585932,
+            "tagId": 29662,
+            "name": "India",
+            "value": null,
+            "labelerLogin": "inbox@datasetninja.com",
+            "createdAt": "2024-01-22T16:21:06.225Z",
+            "updatedAt": "2024-01-22T16:21:06.225Z"
+        }
+    ],
+    "size": {
+        "height": 720,
+        "width": 720
+    },
+    "objects": [
+        {
+            "id": 139000854,
+            "classId": 6511999,
+            "objectId": null,
+            "description": "",
+            "geometryType": "rectangle",
+            "labelerLogin": "inbox@datasetninja.com",
+            "createdAt": "2024-01-22T16:21:06.226Z",
+            "updatedAt": "2024-01-22T16:21:06.226Z",
+            "tags": [
+                {
+                    "id": 104987779,
+                    "tagId": 29666,
+                    "name": "detail",
+                    "value": "wheel mark part",
+                    "labelerLogin": "inbox@datasetninja.com",
+                    "createdAt": "2024-01-22T16:21:06.226Z",
+                    "updatedAt": "2024-01-22T16:21:06.226Z"
+                }
+            ],
+            "classTitle": "longitudinal crack",
+            "points": {
+                "exterior": [
+                    [
+                        420,
+                        436
+                    ],
+                    [
+                        510,
+                        642
+                    ]
+                ],
+                "interior": []
+            }
+        }
+    ]
+}

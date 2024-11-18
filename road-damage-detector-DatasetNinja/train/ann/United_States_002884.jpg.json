@@ -1,0 +1,160 @@
+{
+    "description": "",
+    "tags": [
+        {
+            "id": 16578787,
+            "tagId": 29665,
+            "name": "United States",
+            "value": null,
+            "labelerLogin": "inbox@datasetninja.com",
+            "createdAt": "2024-01-22T16:08:16.158Z",
+            "updatedAt": "2024-01-22T16:08:16.158Z"
+        }
+    ],
+    "size": {
+        "height": 640,
+        "width": 640
+    },
+    "objects": [
+        {
+            "id": 138990326,
+            "classId": 6511999,
+            "objectId": null,
+            "description": "",
+            "geometryType": "rectangle",
+            "labelerLogin": "inbox@datasetninja.com",
+            "createdAt": "2024-01-22T16:08:16.162Z",
+            "updatedAt": "2024-01-22T16:08:16.162Z",
+            "tags": [
+                {
+                    "id": 104977252,
+                    "tagId": 29666,
+                    "name": "detail",
+                    "value": "wheel mark part",
+                    "labelerLogin": "inbox@datasetninja.com",
+                    "createdAt": "2024-01-22T16:08:16.162Z",
+                    "updatedAt": "2024-01-22T16:08:16.162Z"
+                }
+            ],
+            "classTitle": "longitudinal crack",
+            "points": {
+                "exterior": [
+                    [
+                        321,
+                        418
+                    ],
+                    [
+                        470,
+                        627
+                    ]
+                ],
+                "interior": []
+            }
+        },
+        {
+            "id": 138990325,
+            "classId": 6511999,
+            "objectId": null,
+            "description": "",
+            "geometryType": "rectangle",
+            "labelerLogin": "inbox@datasetninja.com",
+            "createdAt": "2024-01-22T16:08:16.160Z",
+            "updatedAt": "2024-01-22T16:08:16.160Z",
+            "tags": [
+                {
+                    "id": 104977251,
+                    "tagId": 29666,
+                    "name": "detail",
+                    "value": "wheel mark part",
+                    "labelerLogin": "inbox@datasetninja.com",
+                    "createdAt": "2024-01-22T16:08:16.160Z",
+                    "updatedAt": "2024-01-22T16:08:16.160Z"
+                }
+            ],
+            "classTitle": "longitudinal crack",
+            "points": {
+                "exterior": [
+                    [
+                        257,
+                        436
+                    ],
+                    [
+                        283,
+                        636
+                    ]
+                ],
+                "interior": []
+            }
+        },
+        {
+            "id": 138990324,
+            "classId": 6512000,
+            "objectId": null,
+            "description": "",
+            "geometryType": "rectangle",
+            "labelerLogin": "inbox@datasetninja.com",
+            "createdAt": "2024-01-22T16:08:16.160Z",
+            "updatedAt": "2024-01-22T16:08:16.160Z",
+            "tags": [
+                {
+                    "id": 104977250,
+                    "tagId": 29666,
+                    "name": "detail",
+                    "value": "equal interval",
+                    "labelerLogin": "inbox@datasetninja.com",
+                    "createdAt": "2024-01-22T16:08:16.160Z",
+                    "updatedAt": "2024-01-22T16:08:16.160Z"
+                }
+            ],
+            "classTitle": "transverse crack",
+            "points": {
+                "exterior": [
+                    [
+                        11,
+                        405
+                    ],
+                    [
+                        340,
+                        440
+                    ]
+                ],
+                "interior": []
+            }
+        },
+        {
+            "id": 138990323,
+            "classId": 6512002,
+            "objectId": null,
+            "description": "",
+            "geometryType": "rectangle",
+            "labelerLogin": "inbox@datasetninja.com",
+            "createdAt": "2024-01-22T16:08:16.159Z",
+            "updatedAt": "2024-01-22T16:08:16.159Z",
+            "tags": [
+                {
+                    "id": 104977249,
+                    "tagId": 29666,
+                    "name": "detail",
+                    "value": "rutting, bump, pothole, separation",
+                    "labelerLogin": "inbox@datasetninja.com",
+                    "createdAt": "2024-01-22T16:08:16.159Z",
+                    "updatedAt": "2024-01-22T16:08:16.159Z"
+                }
+            ],
+            "classTitle": "pothole",
+            "points": {
+                "exterior": [
+                    [
+                        415,
+                        581
+                    ],
+                    [
+                        479,
+                        634
+                    ]
+                ],
+                "interior": []
+            }
+        }
+    ]
+}

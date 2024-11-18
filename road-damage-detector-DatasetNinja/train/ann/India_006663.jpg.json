@@ -1,0 +1,55 @@
+{
+    "description": "",
+    "tags": [
+        {
+            "id": 16586500,
+            "tagId": 29662,
+            "name": "India",
+            "value": null,
+            "labelerLogin": "inbox@datasetninja.com",
+            "createdAt": "2024-01-22T16:22:44.745Z",
+            "updatedAt": "2024-01-22T16:22:44.745Z"
+        }
+    ],
+    "size": {
+        "height": 720,
+        "width": 720
+    },
+    "objects": [
+        {
+            "id": 139001459,
+            "classId": 6512001,
+            "objectId": null,
+            "description": "",
+            "geometryType": "rectangle",
+            "labelerLogin": "inbox@datasetninja.com",
+            "createdAt": "2024-01-22T16:22:44.746Z",
+            "updatedAt": "2024-01-22T16:22:44.746Z",
+            "tags": [
+                {
+                    "id": 104988384,
+                    "tagId": 29666,
+                    "name": "detail",
+                    "value": "partial pavement, overall pavement",
+                    "labelerLogin": "inbox@datasetninja.com",
+                    "createdAt": "2024-01-22T16:22:44.745Z",
+                    "updatedAt": "2024-01-22T16:22:44.745Z"
+                }
+            ],
+            "classTitle": "alligator crack",
+            "points": {
+                "exterior": [
+                    [
+                        257,
+                        492
+                    ],
+                    [
+                        719,
+                        718
+                    ]
+                ],
+                "interior": []
+            }
+        }
+    ]
+}

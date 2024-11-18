@@ -1,0 +1,55 @@
+{
+    "description": "",
+    "tags": [
+        {
+            "id": 16570177,
+            "tagId": 29660,
+            "name": "China_MotorBike",
+            "value": null,
+            "labelerLogin": "inbox@datasetninja.com",
+            "createdAt": "2024-01-22T15:51:48.324Z",
+            "updatedAt": "2024-01-22T15:51:48.324Z"
+        }
+    ],
+    "size": {
+        "height": 512,
+        "width": 512
+    },
+    "objects": [
+        {
+            "id": 138979051,
+            "classId": 6512000,
+            "objectId": null,
+            "description": "",
+            "geometryType": "rectangle",
+            "labelerLogin": "inbox@datasetninja.com",
+            "createdAt": "2024-01-22T15:51:48.325Z",
+            "updatedAt": "2024-01-22T15:51:48.325Z",
+            "tags": [
+                {
+                    "id": 104965977,
+                    "tagId": 29666,
+                    "name": "detail",
+                    "value": "equal interval",
+                    "labelerLogin": "inbox@datasetninja.com",
+                    "createdAt": "2024-01-22T15:51:48.325Z",
+                    "updatedAt": "2024-01-22T15:51:48.325Z"
+                }
+            ],
+            "classTitle": "transverse crack",
+            "points": {
+                "exterior": [
+                    [
+                        133,
+                        330
+                    ],
+                    [
+                        511,
+                        406
+                    ]
+                ],
+                "interior": []
+            }
+        }
+    ]
+}

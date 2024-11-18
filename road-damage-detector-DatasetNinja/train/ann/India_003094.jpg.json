@@ -1,0 +1,55 @@
+{
+    "description": "",
+    "tags": [
+        {
+            "id": 16582305,
+            "tagId": 29662,
+            "name": "India",
+            "value": null,
+            "labelerLogin": "inbox@datasetninja.com",
+            "createdAt": "2024-01-22T16:14:32.831Z",
+            "updatedAt": "2024-01-22T16:14:32.831Z"
+        }
+    ],
+    "size": {
+        "height": 720,
+        "width": 720
+    },
+    "objects": [
+        {
+            "id": 138996985,
+            "classId": 6511999,
+            "objectId": null,
+            "description": "",
+            "geometryType": "rectangle",
+            "labelerLogin": "inbox@datasetninja.com",
+            "createdAt": "2024-01-22T16:14:32.832Z",
+            "updatedAt": "2024-01-22T16:14:32.832Z",
+            "tags": [
+                {
+                    "id": 104983911,
+                    "tagId": 29666,
+                    "name": "detail",
+                    "value": "construction joint part",
+                    "labelerLogin": "inbox@datasetninja.com",
+                    "createdAt": "2024-01-22T16:14:32.831Z",
+                    "updatedAt": "2024-01-22T16:14:32.831Z"
+                }
+            ],
+            "classTitle": "longitudinal crack",
+            "points": {
+                "exterior": [
+                    [
+                        128,
+                        491
+                    ],
+                    [
+                        291,
+                        708
+                    ]
+                ],
+                "interior": []
+            }
+        }
+    ]
+}

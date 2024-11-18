@@ -1,0 +1,90 @@
+{
+    "description": "",
+    "tags": [
+        {
+            "id": 16587659,
+            "tagId": 29662,
+            "name": "India",
+            "value": null,
+            "labelerLogin": "inbox@datasetninja.com",
+            "createdAt": "2024-01-22T16:26:51.281Z",
+            "updatedAt": "2024-01-22T16:26:51.281Z"
+        }
+    ],
+    "size": {
+        "height": 720,
+        "width": 720
+    },
+    "objects": [
+        {
+            "id": 139002728,
+            "classId": 6512002,
+            "objectId": null,
+            "description": "",
+            "geometryType": "rectangle",
+            "labelerLogin": "inbox@datasetninja.com",
+            "createdAt": "2024-01-22T16:26:51.283Z",
+            "updatedAt": "2024-01-22T16:26:51.283Z",
+            "tags": [
+                {
+                    "id": 104989653,
+                    "tagId": 29666,
+                    "name": "detail",
+                    "value": "rutting, bump, pothole, separation",
+                    "labelerLogin": "inbox@datasetninja.com",
+                    "createdAt": "2024-01-22T16:26:51.283Z",
+                    "updatedAt": "2024-01-22T16:26:51.283Z"
+                }
+            ],
+            "classTitle": "pothole",
+            "points": {
+                "exterior": [
+                    [
+                        1,
+                        307
+                    ],
+                    [
+                        269,
+                        594
+                    ]
+                ],
+                "interior": []
+            }
+        },
+        {
+            "id": 139002727,
+            "classId": 6512001,
+            "objectId": null,
+            "description": "",
+            "geometryType": "rectangle",
+            "labelerLogin": "inbox@datasetninja.com",
+            "createdAt": "2024-01-22T16:26:51.282Z",
+            "updatedAt": "2024-01-22T16:26:51.282Z",
+            "tags": [
+                {
+                    "id": 104989652,
+                    "tagId": 29666,
+                    "name": "detail",
+                    "value": "partial pavement, overall pavement",
+                    "labelerLogin": "inbox@datasetninja.com",
+                    "createdAt": "2024-01-22T16:26:51.282Z",
+                    "updatedAt": "2024-01-22T16:26:51.282Z"
+                }
+            ],
+            "classTitle": "alligator crack",
+            "points": {
+                "exterior": [
+                    [
+                        371,
+                        408
+                    ],
+                    [
+                        569,
+                        534
+                    ]
+                ],
+                "interior": []
+            }
+        }
+    ]
+}

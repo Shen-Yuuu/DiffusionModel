@@ -1,0 +1,125 @@
+{
+    "description": "",
+    "tags": [
+        {
+            "id": 16586822,
+            "tagId": 29662,
+            "name": "India",
+            "value": null,
+            "labelerLogin": "inbox@datasetninja.com",
+            "createdAt": "2024-01-22T16:23:43.282Z",
+            "updatedAt": "2024-01-22T16:23:43.282Z"
+        }
+    ],
+    "size": {
+        "height": 720,
+        "width": 720
+    },
+    "objects": [
+        {
+            "id": 139001767,
+            "classId": 6512001,
+            "objectId": null,
+            "description": "",
+            "geometryType": "rectangle",
+            "labelerLogin": "inbox@datasetninja.com",
+            "createdAt": "2024-01-22T16:23:43.283Z",
+            "updatedAt": "2024-01-22T16:23:43.283Z",
+            "tags": [
+                {
+                    "id": 104988692,
+                    "tagId": 29666,
+                    "name": "detail",
+                    "value": "partial pavement, overall pavement",
+                    "labelerLogin": "inbox@datasetninja.com",
+                    "createdAt": "2024-01-22T16:23:43.283Z",
+                    "updatedAt": "2024-01-22T16:23:43.283Z"
+                }
+            ],
+            "classTitle": "alligator crack",
+            "points": {
+                "exterior": [
+                    [
+                        416,
+                        480
+                    ],
+                    [
+                        496,
+                        544
+                    ]
+                ],
+                "interior": []
+            }
+        },
+        {
+            "id": 139001766,
+            "classId": 6512002,
+            "objectId": null,
+            "description": "",
+            "geometryType": "rectangle",
+            "labelerLogin": "inbox@datasetninja.com",
+            "createdAt": "2024-01-22T16:23:43.283Z",
+            "updatedAt": "2024-01-22T16:23:43.283Z",
+            "tags": [
+                {
+                    "id": 104988691,
+                    "tagId": 29666,
+                    "name": "detail",
+                    "value": "rutting, bump, pothole, separation",
+                    "labelerLogin": "inbox@datasetninja.com",
+                    "createdAt": "2024-01-22T16:23:43.282Z",
+                    "updatedAt": "2024-01-22T16:23:43.282Z"
+                }
+            ],
+            "classTitle": "pothole",
+            "points": {
+                "exterior": [
+                    [
+                        187,
+                        525
+                    ],
+                    [
+                        314,
+                        645
+                    ]
+                ],
+                "interior": []
+            }
+        },
+        {
+            "id": 139001765,
+            "classId": 6511999,
+            "objectId": null,
+            "description": "",
+            "geometryType": "rectangle",
+            "labelerLogin": "inbox@datasetninja.com",
+            "createdAt": "2024-01-22T16:23:43.282Z",
+            "updatedAt": "2024-01-22T16:23:43.282Z",
+            "tags": [
+                {
+                    "id": 104988690,
+                    "tagId": 29666,
+                    "name": "detail",
+                    "value": "wheel mark part",
+                    "labelerLogin": "inbox@datasetninja.com",
+                    "createdAt": "2024-01-22T16:23:43.282Z",
+                    "updatedAt": "2024-01-22T16:23:43.282Z"
+                }
+            ],
+            "classTitle": "longitudinal crack",
+            "points": {
+                "exterior": [
+                    [
+                        443,
+                        443
+                    ],
+                    [
+                        513,
+                        546
+                    ]
+                ],
+                "interior": []
+            }
+        }
+    ]
+}

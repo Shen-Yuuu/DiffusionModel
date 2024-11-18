@@ -1,0 +1,55 @@
+{
+    "description": "",
+    "tags": [
+        {
+            "id": 16555546,
+            "tagId": 29663,
+            "name": "Japan",
+            "value": null,
+            "labelerLogin": "inbox@datasetninja.com",
+            "createdAt": "2024-01-22T15:36:54.954Z",
+            "updatedAt": "2024-01-22T15:36:54.954Z"
+        }
+    ],
+    "size": {
+        "height": 1024,
+        "width": 1024
+    },
+    "objects": [
+        {
+            "id": 138961922,
+            "classId": 6512002,
+            "objectId": null,
+            "description": "",
+            "geometryType": "rectangle",
+            "labelerLogin": "inbox@datasetninja.com",
+            "createdAt": "2024-01-22T15:36:54.954Z",
+            "updatedAt": "2024-01-22T15:36:54.954Z",
+            "tags": [
+                {
+                    "id": 104948848,
+                    "tagId": 29666,
+                    "name": "detail",
+                    "value": "rutting, bump, pothole, separation",
+                    "labelerLogin": "inbox@datasetninja.com",
+                    "createdAt": "2024-01-22T15:36:54.954Z",
+                    "updatedAt": "2024-01-22T15:36:54.954Z"
+                }
+            ],
+            "classTitle": "pothole",
+            "points": {
+                "exterior": [
+                    [
+                        506,
+                        138
+                    ],
+                    [
+                        594,
+                        183
+                    ]
+                ],
+                "interior": []
+            }
+        }
+    ]
+}

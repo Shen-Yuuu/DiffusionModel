@@ -1,0 +1,125 @@
+{
+    "description": "",
+    "tags": [
+        {
+            "id": 16585304,
+            "tagId": 29662,
+            "name": "India",
+            "value": null,
+            "labelerLogin": "inbox@datasetninja.com",
+            "createdAt": "2024-01-22T16:19:41.889Z",
+            "updatedAt": "2024-01-22T16:19:41.889Z"
+        }
+    ],
+    "size": {
+        "height": 720,
+        "width": 720
+    },
+    "objects": [
+        {
+            "id": 139000236,
+            "classId": 6512002,
+            "objectId": null,
+            "description": "",
+            "geometryType": "rectangle",
+            "labelerLogin": "inbox@datasetninja.com",
+            "createdAt": "2024-01-22T16:19:41.893Z",
+            "updatedAt": "2024-01-22T16:19:41.893Z",
+            "tags": [
+                {
+                    "id": 104987161,
+                    "tagId": 29666,
+                    "name": "detail",
+                    "value": "rutting, bump, pothole, separation",
+                    "labelerLogin": "inbox@datasetninja.com",
+                    "createdAt": "2024-01-22T16:19:41.893Z",
+                    "updatedAt": "2024-01-22T16:19:41.893Z"
+                }
+            ],
+            "classTitle": "pothole",
+            "points": {
+                "exterior": [
+                    [
+                        428,
+                        577
+                    ],
+                    [
+                        467,
+                        604
+                    ]
+                ],
+                "interior": []
+            }
+        },
+        {
+            "id": 139000235,
+            "classId": 6512003,
+            "objectId": null,
+            "description": "",
+            "geometryType": "rectangle",
+            "labelerLogin": "inbox@datasetninja.com",
+            "createdAt": "2024-01-22T16:19:41.892Z",
+            "updatedAt": "2024-01-22T16:19:41.892Z",
+            "tags": [
+                {
+                    "id": 104987160,
+                    "tagId": 29666,
+                    "name": "detail",
+                    "value": "white line blur",
+                    "labelerLogin": "inbox@datasetninja.com",
+                    "createdAt": "2024-01-22T16:19:41.892Z",
+                    "updatedAt": "2024-01-22T16:19:41.892Z"
+                }
+            ],
+            "classTitle": "other corruption",
+            "points": {
+                "exterior": [
+                    [
+                        22,
+                        665
+                    ],
+                    [
+                        92,
+                        716
+                    ]
+                ],
+                "interior": []
+            }
+        },
+        {
+            "id": 139000234,
+            "classId": 6512003,
+            "objectId": null,
+            "description": "",
+            "geometryType": "rectangle",
+            "labelerLogin": "inbox@datasetninja.com",
+            "createdAt": "2024-01-22T16:19:41.891Z",
+            "updatedAt": "2024-01-22T16:19:41.891Z",
+            "tags": [
+                {
+                    "id": 104987159,
+                    "tagId": 29666,
+                    "name": "detail",
+                    "value": "white line blur",
+                    "labelerLogin": "inbox@datasetninja.com",
+                    "createdAt": "2024-01-22T16:19:41.890Z",
+                    "updatedAt": "2024-01-22T16:19:41.890Z"
+                }
+            ],
+            "classTitle": "other corruption",
+            "points": {
+                "exterior": [
+                    [
+                        232,
+                        507
+                    ],
+                    [
+                        302,
+                        558
+                    ]
+                ],
+                "interior": []
+            }
+        }
+    ]
+}

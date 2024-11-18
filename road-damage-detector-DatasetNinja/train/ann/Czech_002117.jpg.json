@@ -1,0 +1,55 @@
+{
+    "description": "",
+    "tags": [
+        {
+            "id": 16576130,
+            "tagId": 29661,
+            "name": "Czech",
+            "value": null,
+            "labelerLogin": "inbox@datasetninja.com",
+            "createdAt": "2024-01-22T16:02:38.349Z",
+            "updatedAt": "2024-01-22T16:02:38.349Z"
+        }
+    ],
+    "size": {
+        "height": 600,
+        "width": 600
+    },
+    "objects": [
+        {
+            "id": 138984512,
+            "classId": 6512000,
+            "objectId": null,
+            "description": "",
+            "geometryType": "rectangle",
+            "labelerLogin": "inbox@datasetninja.com",
+            "createdAt": "2024-01-22T16:02:38.350Z",
+            "updatedAt": "2024-01-22T16:02:38.350Z",
+            "tags": [
+                {
+                    "id": 104971438,
+                    "tagId": 29666,
+                    "name": "detail",
+                    "value": "equal interval",
+                    "labelerLogin": "inbox@datasetninja.com",
+                    "createdAt": "2024-01-22T16:02:38.350Z",
+                    "updatedAt": "2024-01-22T16:02:38.350Z"
+                }
+            ],
+            "classTitle": "transverse crack",
+            "points": {
+                "exterior": [
+                    [
+                        6,
+                        459
+                    ],
+                    [
+                        180,
+                        483
+                    ]
+                ],
+                "interior": []
+            }
+        }
+    ]
+}

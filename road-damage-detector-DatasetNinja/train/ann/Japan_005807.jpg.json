@@ -1,0 +1,195 @@
+{
+    "description": "",
+    "tags": [
+        {
+            "id": 16552731,
+            "tagId": 29663,
+            "name": "Japan",
+            "value": null,
+            "labelerLogin": "inbox@datasetninja.com",
+            "createdAt": "2024-01-22T15:33:09.070Z",
+            "updatedAt": "2024-01-22T15:33:09.070Z"
+        }
+    ],
+    "size": {
+        "height": 600,
+        "width": 600
+    },
+    "objects": [
+        {
+            "id": 138956303,
+            "classId": 6512001,
+            "objectId": null,
+            "description": "",
+            "geometryType": "rectangle",
+            "labelerLogin": "inbox@datasetninja.com",
+            "createdAt": "2024-01-22T15:33:09.075Z",
+            "updatedAt": "2024-01-22T15:33:09.075Z",
+            "tags": [
+                {
+                    "id": 104943229,
+                    "tagId": 29666,
+                    "name": "detail",
+                    "value": "partial pavement, overall pavement",
+                    "labelerLogin": "inbox@datasetninja.com",
+                    "createdAt": "2024-01-22T15:33:09.074Z",
+                    "updatedAt": "2024-01-22T15:33:09.074Z"
+                }
+            ],
+            "classTitle": "alligator crack",
+            "points": {
+                "exterior": [
+                    [
+                        26,
+                        194
+                    ],
+                    [
+                        162,
+                        452
+                    ]
+                ],
+                "interior": []
+            }
+        },
+        {
+            "id": 138956302,
+            "classId": 6511999,
+            "objectId": null,
+            "description": "",
+            "geometryType": "rectangle",
+            "labelerLogin": "inbox@datasetninja.com",
+            "createdAt": "2024-01-22T15:33:09.074Z",
+            "updatedAt": "2024-01-22T15:33:09.074Z",
+            "tags": [
+                {
+                    "id": 104943228,
+                    "tagId": 29666,
+                    "name": "detail",
+                    "value": "wheel mark part",
+                    "labelerLogin": "inbox@datasetninja.com",
+                    "createdAt": "2024-01-22T15:33:09.074Z",
+                    "updatedAt": "2024-01-22T15:33:09.074Z"
+                }
+            ],
+            "classTitle": "longitudinal crack",
+            "points": {
+                "exterior": [
+                    [
+                        404,
+                        95
+                    ],
+                    [
+                        519,
+                        301
+                    ]
+                ],
+                "interior": []
+            }
+        },
+        {
+            "id": 138956301,
+            "classId": 6512000,
+            "objectId": null,
+            "description": "",
+            "geometryType": "rectangle",
+            "labelerLogin": "inbox@datasetninja.com",
+            "createdAt": "2024-01-22T15:33:09.073Z",
+            "updatedAt": "2024-01-22T15:33:09.073Z",
+            "tags": [
+                {
+                    "id": 104943227,
+                    "tagId": 29666,
+                    "name": "detail",
+                    "value": "equal interval",
+                    "labelerLogin": "inbox@datasetninja.com",
+                    "createdAt": "2024-01-22T15:33:09.073Z",
+                    "updatedAt": "2024-01-22T15:33:09.073Z"
+                }
+            ],
+            "classTitle": "transverse crack",
+            "points": {
+                "exterior": [
+                    [
+                        148,
+                        285
+                    ],
+                    [
+                        505,
+                        346
+                    ]
+                ],
+                "interior": []
+            }
+        },
+        {
+            "id": 138956300,
+            "classId": 6511999,
+            "objectId": null,
+            "description": "",
+            "geometryType": "rectangle",
+            "labelerLogin": "inbox@datasetninja.com",
+            "createdAt": "2024-01-22T15:33:09.073Z",
+            "updatedAt": "2024-01-22T15:33:09.073Z",
+            "tags": [
+                {
+                    "id": 104943226,
+                    "tagId": 29666,
+                    "name": "detail",
+                    "value": "wheel mark part",
+                    "labelerLogin": "inbox@datasetninja.com",
+                    "createdAt": "2024-01-22T15:33:09.072Z",
+                    "updatedAt": "2024-01-22T15:33:09.072Z"
+                }
+            ],
+            "classTitle": "longitudinal crack",
+            "points": {
+                "exterior": [
+                    [
+                        493,
+                        405
+                    ],
+                    [
+                        545,
+                        486
+                    ]
+                ],
+                "interior": []
+            }
+        },
+        {
+            "id": 138956299,
+            "classId": 6512000,
+            "objectId": null,
+            "description": "",
+            "geometryType": "rectangle",
+            "labelerLogin": "inbox@datasetninja.com",
+            "createdAt": "2024-01-22T15:33:09.072Z",
+            "updatedAt": "2024-01-22T15:33:09.072Z",
+            "tags": [
+                {
+                    "id": 104943225,
+                    "tagId": 29666,
+                    "name": "detail",
+                    "value": "equal interval",
+                    "labelerLogin": "inbox@datasetninja.com",
+                    "createdAt": "2024-01-22T15:33:09.072Z",
+                    "updatedAt": "2024-01-22T15:33:09.072Z"
+                }
+            ],
+            "classTitle": "transverse crack",
+            "points": {
+                "exterior": [
+                    [
+                        517,
+                        301
+                    ],
+                    [
+                        599,
+                        342
+                    ]
+                ],
+                "interior": []
+            }
+        }
+    ]
+}

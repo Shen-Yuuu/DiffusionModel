@@ -1,0 +1,160 @@
+{
+    "description": "",
+    "tags": [
+        {
+            "id": 16583232,
+            "tagId": 29662,
+            "name": "India",
+            "value": null,
+            "labelerLogin": "inbox@datasetninja.com",
+            "createdAt": "2024-01-22T16:16:10.219Z",
+            "updatedAt": "2024-01-22T16:16:10.219Z"
+        }
+    ],
+    "size": {
+        "height": 720,
+        "width": 720
+    },
+    "objects": [
+        {
+            "id": 138997981,
+            "classId": 6511999,
+            "objectId": null,
+            "description": "",
+            "geometryType": "rectangle",
+            "labelerLogin": "inbox@datasetninja.com",
+            "createdAt": "2024-01-22T16:16:10.225Z",
+            "updatedAt": "2024-01-22T16:16:10.225Z",
+            "tags": [
+                {
+                    "id": 104984907,
+                    "tagId": 29666,
+                    "name": "detail",
+                    "value": "construction joint part",
+                    "labelerLogin": "inbox@datasetninja.com",
+                    "createdAt": "2024-01-22T16:16:10.225Z",
+                    "updatedAt": "2024-01-22T16:16:10.225Z"
+                }
+            ],
+            "classTitle": "longitudinal crack",
+            "points": {
+                "exterior": [
+                    [
+                        461,
+                        505
+                    ],
+                    [
+                        557,
+                        615
+                    ]
+                ],
+                "interior": []
+            }
+        },
+        {
+            "id": 138997980,
+            "classId": 6512003,
+            "objectId": null,
+            "description": "",
+            "geometryType": "rectangle",
+            "labelerLogin": "inbox@datasetninja.com",
+            "createdAt": "2024-01-22T16:16:10.224Z",
+            "updatedAt": "2024-01-22T16:16:10.224Z",
+            "tags": [
+                {
+                    "id": 104984906,
+                    "tagId": 29666,
+                    "name": "detail",
+                    "value": "white line blur",
+                    "labelerLogin": "inbox@datasetninja.com",
+                    "createdAt": "2024-01-22T16:16:10.223Z",
+                    "updatedAt": "2024-01-22T16:16:10.223Z"
+                }
+            ],
+            "classTitle": "other corruption",
+            "points": {
+                "exterior": [
+                    [
+                        546,
+                        609
+                    ],
+                    [
+                        642,
+                        719
+                    ]
+                ],
+                "interior": []
+            }
+        },
+        {
+            "id": 138997979,
+            "classId": 6512003,
+            "objectId": null,
+            "description": "",
+            "geometryType": "rectangle",
+            "labelerLogin": "inbox@datasetninja.com",
+            "createdAt": "2024-01-22T16:16:10.222Z",
+            "updatedAt": "2024-01-22T16:16:10.222Z",
+            "tags": [
+                {
+                    "id": 104984905,
+                    "tagId": 29666,
+                    "name": "detail",
+                    "value": "white line blur",
+                    "labelerLogin": "inbox@datasetninja.com",
+                    "createdAt": "2024-01-22T16:16:10.222Z",
+                    "updatedAt": "2024-01-22T16:16:10.222Z"
+                }
+            ],
+            "classTitle": "other corruption",
+            "points": {
+                "exterior": [
+                    [
+                        462,
+                        502
+                    ],
+                    [
+                        558,
+                        613
+                    ]
+                ],
+                "interior": []
+            }
+        },
+        {
+            "id": 138997978,
+            "classId": 6511999,
+            "objectId": null,
+            "description": "",
+            "geometryType": "rectangle",
+            "labelerLogin": "inbox@datasetninja.com",
+            "createdAt": "2024-01-22T16:16:10.221Z",
+            "updatedAt": "2024-01-22T16:16:10.221Z",
+            "tags": [
+                {
+                    "id": 104984904,
+                    "tagId": 29666,
+                    "name": "detail",
+                    "value": "construction joint part",
+                    "labelerLogin": "inbox@datasetninja.com",
+                    "createdAt": "2024-01-22T16:16:10.220Z",
+                    "updatedAt": "2024-01-22T16:16:10.220Z"
+                }
+            ],
+            "classTitle": "longitudinal crack",
+            "points": {
+                "exterior": [
+                    [
+                        558,
+                        609
+                    ],
+                    [
+                        654,
+                        719
+                    ]
+                ],
+                "interior": []
+            }
+        }
+    ]
+}

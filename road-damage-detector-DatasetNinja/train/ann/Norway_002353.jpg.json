@@ -1,0 +1,55 @@
+{
+    "description": "",
+    "tags": [
+        {
+            "id": 16566618,
+            "tagId": 29664,
+            "name": "Norway",
+            "value": null,
+            "labelerLogin": "inbox@datasetninja.com",
+            "createdAt": "2024-01-22T15:47:37.501Z",
+            "updatedAt": "2024-01-22T15:47:37.501Z"
+        }
+    ],
+    "size": {
+        "height": 2041,
+        "width": 3643
+    },
+    "objects": [
+        {
+            "id": 138974268,
+            "classId": 6512000,
+            "objectId": null,
+            "description": "",
+            "geometryType": "rectangle",
+            "labelerLogin": "inbox@datasetninja.com",
+            "createdAt": "2024-01-22T15:47:37.502Z",
+            "updatedAt": "2024-01-22T15:47:37.502Z",
+            "tags": [
+                {
+                    "id": 104961194,
+                    "tagId": 29666,
+                    "name": "detail",
+                    "value": "equal interval",
+                    "labelerLogin": "inbox@datasetninja.com",
+                    "createdAt": "2024-01-22T15:47:37.502Z",
+                    "updatedAt": "2024-01-22T15:47:37.502Z"
+                }
+            ],
+            "classTitle": "transverse crack",
+            "points": {
+                "exterior": [
+                    [
+                        148,
+                        1470
+                    ],
+                    [
+                        1568,
+                        1502
+                    ]
+                ],
+                "interior": []
+            }
+        }
+    ]
+}
