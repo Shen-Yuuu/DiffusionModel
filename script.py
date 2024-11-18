@@ -257,35 +257,35 @@ class DDPM(nn.Module):
         x_i_double = torch.cat([x_i, x_i])  # [2*n_sample, C, H, W]
         c_i_double = torch.cat([target_labels, target_labels])  # [2*n_sample, n_classes]
         context_mask_double = torch.cat([context_mask, torch.ones_like(context_mask)])  # [2*n_sample]
-        
-        x_i_store = []
-        for i in range(self.n_T, 0, -2):
-            print(f'sampling timestep {i}',end='\r')
-            t_is = torch.tensor([i / self.n_T]).to(device)
-            t_is_double = t_is.repeat(2*n_sample)
-            
-            # 生成噪声
-            z = torch.randn_like(x_i_double) if i > 1 else 0
-            
-            # 确保context_mask维度正确
-            current_context_mask = context_mask_double.view(-1, 1)
-            
-            # 预测噪声
-            eps = self.nn_model(x_i_double, c_i_double, t_is_double, current_context_mask)
-            eps1, eps2 = eps.chunk(2)  # 将预测分成两半
-            eps = (1 + guide_w) * eps1 - guide_w * eps2
-            
-            # 更新采样
-            x_i = (
-                self.oneover_sqrta[i] * (x_i - eps * self.mab_over_sqrtmab[i])
-                + self.sqrt_beta_t[i] * (z[:n_sample] if isinstance(z, torch.Tensor) else z)
-            )
-            
-            # 更新双倍批次
-            x_i_double = torch.cat([x_i, x_i])
-            
-            if i % 20 == 0 or i == self.n_T or i < 8:
-                x_i_store.append(x_i.detach().cpu().numpy())
+        with torch.no_grad():
+            x_i_store = []
+            for i in range(self.n_T, 0, -2):
+                print(f'sampling timestep {i}',end='\r')
+                t_is = torch.tensor([i / self.n_T]).to(device)
+                t_is_double = t_is.repeat(2*n_sample)
+                
+                # 生成噪声
+                z = torch.randn_like(x_i_double) if i > 1 else 0
+                
+                # 确保context_mask维度正确
+                current_context_mask = context_mask_double.view(-1, 1)
+                
+                # 预测噪声
+                eps = self.nn_model(x_i_double, c_i_double, t_is_double, current_context_mask)
+                eps1, eps2 = eps.chunk(2)  # 将预测分成两半
+                eps = (1 + guide_w) * eps1 - guide_w * eps2
+                
+                # 更新采样
+                x_i = (
+                    self.oneover_sqrta[i] * (x_i - eps * self.mab_over_sqrtmab[i])
+                    + self.sqrt_beta_t[i] * (z[:n_sample] if isinstance(z, torch.Tensor) else z)
+                )
+                
+                # 更新双倍批次
+                x_i_double = torch.cat([x_i, x_i])
+                
+                if i % 20 == 0 or i == self.n_T or i < 8:
+                    x_i_store.append(x_i.detach().cpu().numpy())
         
         x_i_store = np.array(x_i_store)
         return x_i, x_i_store
@@ -399,6 +399,10 @@ def train_custom_dataset():
     # 优化器
     optim = torch.optim.Adam(ddpm.parameters(), lr=lrate)
     
+    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
+        optim, mode='min', factor=0.5, patience=10, verbose=True
+    )
+
     specified_path = './data/runs/diffusion_training'
 
     # 检查路径是否存在，如果不存在则创建它
@@ -439,6 +443,9 @@ def train_custom_dataset():
         avg_loss = sum(epoch_losses) / len(epoch_losses)
         losses.append(avg_loss)
         writer.add_scalar('Loss/train', avg_loss, ep)
+        
+        # 更新学习率
+        scheduler.step(avg_loss)
         
         # 每10个epoch绘制并保存损失曲线
         if ep % 10 == 0 or ep == n_epoch-1:
