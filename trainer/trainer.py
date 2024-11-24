@@ -9,137 +9,90 @@ from tqdm import tqdm
 import logging
 import os
 import numpy as np
+from models.ddpm import DDPM
 
 class DDPMTrainer:
-    def __init__(
-        self,
-        config: Any,
-        model: torch.nn.Module,
-        dataset: torch.utils.data.Dataset,
-        logger: Optional[logging.Logger] = None
-    ):
+    def __init__(self, config, model, dataset, logger=None):
         self.config = config
-        self.model = model
         self.dataset = dataset
-        self.logger = logger or self._setup_logger()
+        self.device = config.training.device
         
-        self.setup_training()
+        # 创建 DDPM 模型
+        n_total_classes = len(dataset.classes) * 3  # 扩展类别维度以包含位置和大小信息
+        self.model = DDPM(
+            nn_model=model,
+            betas=(1e-4, 0.02),
+            n_T=config.model.n_T,
+            device=self.device,
+            drop_prob=0.1
+        ).to(self.device)
         
-    def _setup_logger(self) -> logging.Logger:
-        logger = logging.getLogger('DDPMTrainer')
-        logger.setLevel(logging.INFO)
+        # 创建优化器和学习率调度器
+        self.optimizer = torch.optim.Adam(self.model.parameters(), lr=config.training.learning_rate)
+        self.scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
+            self.optimizer, mode='min', factor=0.5, patience=5, verbose=True
+        )
         
-        ch = logging.StreamHandler()
-        ch.setLevel(logging.INFO)
-        
-        log_dir = Path(self.config.training.save_dir) / 'logs'
-        log_dir.mkdir(parents=True, exist_ok=True)
-        fh = logging.FileHandler(log_dir / 'training.log')
-        fh.setLevel(logging.INFO)
-        
-        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-        ch.setFormatter(formatter)
-        fh.setFormatter(formatter)
-        
-        logger.addHandler(ch)
-        logger.addHandler(fh)
-        
-        return logger
-
-    def setup_training(self):
-        self.save_dir = Path(self.config.training.save_dir)
-        self.save_dir.mkdir(parents=True, exist_ok=True)
-        
+        # 创建数据加载器
         self.dataloader = DataLoader(
-            self.dataset,
-            batch_size=self.config.training.batch_size,
+            dataset,
+            batch_size=config.training.batch_size,
             shuffle=True,
-            num_workers=self.config.training.num_workers,
+            num_workers=config.training.num_workers,
             pin_memory=True
         )
         
-        self.device = torch.device(self.config.training.device)
-        self.model = self.model.to(self.device)
+        # 设置保存目录
+        self.save_dir = Path(config.training.save_dir)
+        self.save_dir.mkdir(parents=True, exist_ok=True)
+        (self.save_dir / 'samples').mkdir(exist_ok=True)
         
-        self.optimizer = torch.optim.Adam(
-            self.model.parameters(),
-            lr=self.config.training.learning_rate
-        )
+        # 设置日志
+        self.logger = logger or logging.getLogger(__name__)
+        self.writer = SummaryWriter(self.save_dir / 'logs')
         
-        self.scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
-            self.optimizer,
-            mode='min',
-            factor=self.config.training.scheduler_factor,
-            patience=self.config.training.scheduler_patience,
-            verbose=True
-        )
-        
-        self.writer = SummaryWriter(self.save_dir / 'runs')
-        
+        # 训练状态
         self.current_epoch = 0
-        self.best_loss = float('inf')
-        self.patience_counter = 0
-        
-        self.load_checkpoint()
+        self.losses = []
+        self.loss_ema = None
 
-    def save_checkpoint(self, is_best: bool = False):
-        checkpoint = {
-            'epoch': self.current_epoch,
-            'model_state_dict': self.model.state_dict(),
-            'optimizer_state_dict': self.optimizer.state_dict(),
-            'scheduler_state_dict': self.scheduler.state_dict(),
-            'best_loss': self.best_loss,
-            'patience_counter': self.patience_counter
-        }
-        
-        checkpoint_path = self.save_dir / 'latest_checkpoint.pth'
-        torch.save(checkpoint, checkpoint_path)
-        
-        if is_best:
-            best_model_path = self.save_dir / 'best_model.pth'
-            torch.save(checkpoint, best_model_path)
-            self.logger.info(f"保存最佳模型到 {best_model_path}")
-
-    def load_checkpoint(self):
-        checkpoint_path = self.save_dir / 'latest_checkpoint.pth'
-        if checkpoint_path.exists():
-            checkpoint = torch.load(checkpoint_path, map_location=self.device)
-            
-            self.model.load_state_dict(checkpoint['model_state_dict'])
-            self.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
-            self.scheduler.load_state_dict(checkpoint['scheduler_state_dict'])
-            self.current_epoch = checkpoint['epoch']
-            self.best_loss = checkpoint['best_loss']
-            self.patience_counter = checkpoint['patience_counter']
-            
-            self.logger.info(f"从epoch {self.current_epoch} 恢复训练")
-
-    def train_epoch(self) -> float:
+    def train_epoch(self):
         self.model.train()
         epoch_losses = []
+        pbar = tqdm(self.dataloader)
         
-        pbar = tqdm(self.dataloader, desc=f"Epoch {self.current_epoch}")
-        for batch_idx, (images, labels) in enumerate(pbar):
-            images = images.to(self.device)
-            labels = labels.to(self.device)
-            
+        for batch in pbar:
             self.optimizer.zero_grad()
-            loss = self.model(images, labels)
+            
+            with torch.amp.autocast('cuda'):
+                images = batch['image'].to(self.device)
+                labels = batch['labels'].to(self.device)
+                position_weights = batch['position_weights'].to(self.device)
+                size_weights = batch['size_weights'].to(self.device)
+                
+                # 组合条件信息
+                combined_condition = torch.cat([
+                    labels,
+                    position_weights,
+                    size_weights
+                ], dim=1)
+                
+                loss = self.model(images, combined_condition)
             
             loss.backward()
+            torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=1.0)
             self.optimizer.step()
             
             epoch_losses.append(loss.item())
             
-            pbar.set_postfix({
-                'loss': f"{loss.item():.4f}",
-                'avg_loss': f"{np.mean(epoch_losses):.4f}"
-            })
+            if self.loss_ema is None:
+                self.loss_ema = loss.item()
+            else:
+                self.loss_ema = 0.95 * self.loss_ema + 0.05 * loss.item()
             
-            global_step = self.current_epoch * len(self.dataloader) + batch_idx
-            self.writer.add_scalar('Loss/train_step', loss.item(), global_step)
-            
-        avg_loss = np.mean(epoch_losses)
+            pbar.set_description(f"loss: {self.loss_ema:.4f}")
+        
+        avg_loss = sum(epoch_losses) / len(epoch_losses)
         return avg_loss
 
     def sample_images(self):
@@ -148,83 +101,71 @@ class DDPMTrainer:
             for w_i, w in enumerate(self.config.training.ws_test):
                 for class_idx, class_name in enumerate(self.dataset.classes):
                     n_sample = 4
+                    
+                    # 创建增强的条件向量
                     target_labels = torch.zeros(n_sample, len(self.dataset.classes))
                     target_labels[:, class_idx] = 1
-                    target_labels = target_labels.to(self.device)
                     
-                    x_gen, x_gen_store = self.model.sample(
-                        n_sample,
-                        (3, 256, 256),
+                    # 添加默认的位置和大小信息
+                    position_info = torch.ones(n_sample, len(self.dataset.classes)) * 0.5
+                    size_info = torch.ones(n_sample, len(self.dataset.classes)) * 0.3
+                    
+                    # 组合条件信息
+                    combined_target = torch.cat([
+                        target_labels,
+                        position_info,
+                        size_info
+                    ], dim=1).to(self.device)
+                    
+                    # 生成样本
+                    x_gen, _ = self.model.sample(
+                        n_sample, 
+                        (3, self.config.data.image_size[0], self.config.data.image_size[1]),
                         self.device,
-                        target_labels=target_labels,
+                        target_labels=combined_target,
                         guide_w=w
                     )
                     
+                    # 保存生成的图片
                     grid = make_grid(x_gen * 0.5 + 0.5, nrow=2)
-                    save_image(
-                        grid,
-                        self.save_dir / f'samples/ep{self.current_epoch}_w{w}_{class_name}.png'
-                    )
-                    
-                    self.writer.add_image(
-                        f'Samples/w{w}_{class_name}',
-                        grid,
-                        self.current_epoch
-                    )
+                    save_image(grid, self.save_dir / f'samples/ep{self.current_epoch}_w{w}_{class_name}.png')
 
     def train(self):
         self.logger.info("开始训练...")
-        n_epochs = self.config.training.n_epoch
         
-        try:
-            for epoch in range(self.current_epoch, n_epochs):
-                self.current_epoch = epoch
-                self.logger.info(f"开始 Epoch {epoch}/{n_epochs-1}")
-                
-                avg_loss = self.train_epoch()
-                
-                self.writer.add_scalar('Loss/train_epoch', avg_loss, epoch)
-                
-                self.scheduler.step(avg_loss)
-                
-                is_best = avg_loss < self.best_loss
-                if is_best:
-                    self.best_loss = avg_loss
-                    self.patience_counter = 0
-                else:
-                    self.patience_counter += 1
-                
-                self.save_checkpoint(is_best)
-                
-                if epoch % 10 == 0 or epoch == n_epochs - 1:
-                    self.sample_images()
-                
-                if self.patience_counter >= self.config.training.early_stopping_patience:
-                    self.logger.info(f"触发早停: {self.patience_counter} epochs未改善")
-                    break
-                
-                self.logger.info(
-                    f"Epoch {epoch} 完成: "
-                    f"avg_loss={avg_loss:.4f}, "
-                    f"best_loss={self.best_loss:.4f}, "
-                    f"patience={self.patience_counter}"
+        for epoch in range(self.config.training.n_epoch):
+            self.current_epoch = epoch
+            self.logger.info(f"开始 Epoch {epoch}/{self.config.training.n_epoch-1}")
+            
+            # 训练一个 epoch
+            avg_loss = self.train_epoch()
+            self.losses.append(avg_loss)
+            
+            # 更新学习率
+            self.scheduler.step(avg_loss)
+            
+            # 保存损失曲线
+            if epoch % 10 == 0 or epoch == self.config.training.n_epoch - 1:
+                plt.figure(figsize=(10, 5))
+                plt.plot(self.losses, label='Training Loss')
+                plt.title('DDPM Training Loss')
+                plt.xlabel('Epoch')
+                plt.ylabel('Loss')
+                plt.legend()
+                plt.grid(True)
+                plt.savefig(self.save_dir / 'loss_curve.png')
+                plt.close()
+            
+            # 生成样本
+            if epoch % 10 == 0 or epoch == self.config.training.n_epoch - 1:
+                self.sample_images()
+            
+            # 保存模型
+            if self.config.training.save_model and epoch == self.config.training.n_epoch - 1:
+                torch.save(
+                    self.model.state_dict(),
+                    self.save_dir / f'model_ep{epoch}.pth'
                 )
-                
-        except KeyboardInterrupt:
-            self.logger.info("训练被用户中断")
+                self.logger.info(f'保存模型到 {self.save_dir}/model_ep{epoch}.pth')
         
-        finally:
-            self.save_checkpoint()
-            self.writer.close()
-            self.logger.info("训练结束")
-
-    def plot_loss_curve(self):
-        plt.figure(figsize=(10, 5))
-        plt.plot(self.writer.scalar_dict['Loss/train_epoch'], label='Training Loss')
-        plt.title('DDPM Training Loss')
-        plt.xlabel('Epoch')
-        plt.ylabel('Loss')
-        plt.legend()
-        plt.grid(True)
-        plt.savefig(self.save_dir / 'loss_curve.png')
-        plt.close()
+        self.logger.info("训练结束")

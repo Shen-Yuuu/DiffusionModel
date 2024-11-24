@@ -4,7 +4,7 @@ import torch
 @dataclass
 class ModelConfig:
     in_channels: int = 3
-    n_feat: int = 256
+    n_feat: int = 128
     n_classes: int = 7
     drop_prob: float = 0.1
     betas: tuple = (1e-4, 0.02)
@@ -28,7 +28,7 @@ class TrainingConfig:
 @dataclass
 class DataConfig:
     project_dir: str = "./road-damage-detector-DatasetNinja"
-    image_size: tuple = (256, 256)
+    image_size: tuple = (512, 512)
     augmentation_params = {
         'brightness': 0.2,
         'contrast': 0.2,

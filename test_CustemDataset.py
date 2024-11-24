@@ -1,118 +1,65 @@
-import torch
-from torch.utils.data import DataLoader
-from torchvision import transforms
+import torchvision.transforms as transforms
 import matplotlib.pyplot as plt
-import numpy as np
-from PIL import Image, ImageDraw
-import os
-from scripy_old import CustomDataset
-def test_custom_dataset():
-    # 设置图像大小
-    IMAGE_SIZE = 512
+from script import CustomDataset
+
+
+def visualize_sample(dataset, idx):
+    """可视化数据集中的样本和所有检测到的标签"""
+    image, labels = dataset[idx]
     
-    # 数据预处理
-    tf = transforms.Compose([
-        transforms.Resize((IMAGE_SIZE, IMAGE_SIZE)),
+    # 转换图像用于显示
+    img_display = image * 0.5 + 0.5
+    img_display = img_display.permute(1, 2, 0)
+    
+    # 获取激活的类别
+    active_classes = [dataset.classes[i] for i, label in enumerate(labels) if label > 0]
+    
+    plt.figure(figsize=(8, 8))
+    plt.imshow(img_display)
+    plt.title(f'检测到的损坏类型:\n{", ".join(active_classes)}')
+    plt.axis('off')
+    plt.show()
+
+# 测试代码
+def test_multi_label_detection(sample_indices=None):
+    """
+    测试多标签检测并可视化指定的样本
+    Args:
+        sample_indices: 要查看的样本索引列表，如果为None则默认查看前5个样本
+    """
+    transform = transforms.Compose([
         transforms.ToTensor(),
         transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
     ])
     
-    # 创建数据集实例
-    dataset = CustomDataset("./road-damage-detector-DatasetNinja", transform=tf)
-    
-    # 创建数据加载器
-    dataloader = DataLoader(
-        dataset, 
-        batch_size=4, 
-        shuffle=True,
-        num_workers=0
+    dataset = CustomDataset(
+        data_dir="./road-damage-detector-DatasetNinja",
+        transform=transform,
+        crop_size=512,
+        multi_label=True
     )
     
-    # 获取一个批次的数据
-    batch = next(iter(dataloader))
+    # 如果没有指定样本索引，则默认查看前5个样本
+    if sample_indices is None:
+        sample_indices = range(5)
     
-    def visualize_sample(sample_idx=0):
-        # 反归一化图像
-        img = batch['image'][sample_idx].numpy()
-        img = ((img * 0.5 + 0.5) * 255).astype(np.uint8).transpose(1, 2, 0)
-        img = Image.fromarray(img)
-        draw = ImageDraw.Draw(img)
-        
-        # 获取有效的边界框
-        valid_boxes = batch['boxes'][sample_idx][batch['box_mask'][sample_idx] == 1]
-        
-        # 为每个类别分配不同的颜色
-        colors = ['red', 'green', 'blue', 'yellow', 'purple', 'cyan', 'orange', 'pink']
-        
-        # 绘制边界框
-        for box in valid_boxes:
-            x1, y1, x2, y2 = box[:4]
-            class_idx = int(box[4])
-            confidence = box[5]  # 面积比例
-            
-            # 将归一化坐标转换为像素坐标
-            x1, y1, x2, y2 = [coord * IMAGE_SIZE for coord in [x1, y1, x2, y2]]
-            
-            # 确保坐标在有效范围内
-            x1 = max(0, min(IMAGE_SIZE, x1))
-            y1 = max(0, min(IMAGE_SIZE, y1))
-            x2 = max(0, min(IMAGE_SIZE, x2))
-            y2 = max(0, min(IMAGE_SIZE, y2))
-            
-            # 获取类别颜色
-            color = colors[class_idx % len(colors)]
-            
-            # 绘制边界框
-            draw.rectangle([x1, y1, x2, y2], outline=color, width=2)
-            
-            # 添加类别标签和置信度
-            class_name = dataset.classes[class_idx]
-            label = f"{class_name}: {confidence:.2f}"
-            draw.text((x1, y1-15), label, fill=color)
-            
-            # 绘制中心点
-            center_x = (x1 + x2) / 2
-            center_y = (y1 + y2) / 2
-            radius = 3
-            draw.ellipse([center_x-radius, center_y-radius, 
-                         center_x+radius, center_y+radius], 
-                        fill=color)
-        
-        # 显示图像
-        plt.figure(figsize=(15, 15))
-        plt.imshow(img)
-        plt.axis('off')
-        plt.title(f"Sample {sample_idx}")
-        
-        # 打印该样本的详细信息
-        print(f"\n样本 {sample_idx} 的详细信息:")
-        print(f"图像大小: {img.size}")
-        print(f"有效目标数量: {int(batch['num_objects'][sample_idx])}")
-        print("\n边界框信息:")
-        for i, box in enumerate(valid_boxes):
-            class_idx = int(box[4])
-            class_name = dataset.classes[class_idx]
-            print(f"目标 {i+1}:")
-            print(f"  类别: {class_name}")
-            print(f"  归一化坐标: ({box[0]:.3f}, {box[1]:.3f}, {box[2]:.3f}, {box[3]:.3f})")
-            print(f"  面积比例: {box[5]:.3f}")
-        
-        # 保存结果
-        save_dir = './test_results'
-        os.makedirs(save_dir, exist_ok=True)
-        plt.savefig(f'{save_dir}/sample_{sample_idx}_annotated.png', 
-                   bbox_inches='tight', dpi=300)
-        plt.close()
-    
-    # 可视化所有样本
-    for i in range(batch['image'].shape[0]):
-        visualize_sample(i)
-    
-    # 打印数据集统计信息
-    print("\n数据集统计信息:")
-    print(f"总样本数: {len(dataset)}")
-    print(f"类别数量: {len(dataset.classes)}")
-    print("类别列表:", dataset.classes)
+    # 可视化指定的样本
+    for i in sample_indices:
+        try:
+            visualize_sample(dataset, i)
+            print(f"\n样本 {i} 的标签分布:")
+            image, labels = dataset[i]
+            for j, label in enumerate(labels):
+                if label > 0:
+                    print(f"- {dataset.classes[j]}")
+            print("\n" + "="*50 + "\n")
+        except IndexError:
+            print(f"警告：索引 {i} 超出数据集范围")
 
 if __name__ == "__main__":
-    test_custom_dataset()
+    # 可以指定要查看的具体样本索引
+    specific_samples = [10, 20, 30, 40, 50,100,110,120,130,140,150]  # 例如查看这些索引的样本
+    test_multi_label_detection(specific_samples)
+    
+    # 或者使用默认的前5个样本
+    # test_multi_label_detection()

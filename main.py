@@ -10,12 +10,6 @@ def main():
     
     transform = transforms.Compose([
         transforms.Resize(config.data.image_size),
-        transforms.RandomHorizontalFlip(p=config.data.augmentation_params['flip_prob']),
-        transforms.RandomRotation(config.data.augmentation_params['rotation_degrees']),
-        transforms.ColorJitter(
-            brightness=config.data.augmentation_params['brightness'],
-            contrast=config.data.augmentation_params['contrast']
-        ),
         transforms.ToTensor(),
         transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
     ])

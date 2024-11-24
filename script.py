@@ -15,8 +15,10 @@ from PIL import Image
 import tarfile
 import json
 import io
-from torch.utils.tensorboard import SummaryWriter
-import supervisely as sly
+import random
+from torch.amp import autocast, GradScaler
+from torch.optim.lr_scheduler import CosineAnnealingLR
+import copy
 
 class ResidualConvBlock(nn.Module):
     def __init__(
@@ -107,7 +109,7 @@ class EmbedFC(nn.Module):
 
 
 class ContextUnet(nn.Module):
-    def __init__(self, in_channels=3, n_feat=512, n_classes=1):
+    def __init__(self, in_channels=3, n_feat=256, n_classes=1):
         super(ContextUnet, self).__init__()
 
         self.in_channels = in_channels
@@ -140,8 +142,6 @@ class ContextUnet(nn.Module):
             nn.ReLU(),
             nn.Conv2d(n_feat, self.in_channels, 3, 1, 1),
         )
-
-        self.dropout = nn.Dropout(0.1)
 
     def forward(self, x, c, t, context_mask):
         # x is (noisy) image, c is context label, t is timestep, 
@@ -257,178 +257,271 @@ class DDPM(nn.Module):
         x_i_double = torch.cat([x_i, x_i])  # [2*n_sample, C, H, W]
         c_i_double = torch.cat([target_labels, target_labels])  # [2*n_sample, n_classes]
         context_mask_double = torch.cat([context_mask, torch.ones_like(context_mask)])  # [2*n_sample]
-        with torch.no_grad():
-            x_i_store = []
-            for i in range(self.n_T, 0, -2):
-                print(f'sampling timestep {i}',end='\r')
-                t_is = torch.tensor([i / self.n_T]).to(device)
-                t_is_double = t_is.repeat(2*n_sample)
-                
-                # 生成噪声
-                z = torch.randn_like(x_i_double) if i > 1 else 0
-                
-                # 确保context_mask维度正确
-                current_context_mask = context_mask_double.view(-1, 1)
-                
-                # 预测噪声
-                eps = self.nn_model(x_i_double, c_i_double, t_is_double, current_context_mask)
-                eps1, eps2 = eps.chunk(2)  # 将预测分成两半
-                eps = (1 + guide_w) * eps1 - guide_w * eps2
-                
-                # 更新采样
-                x_i = (
-                    self.oneover_sqrta[i] * (x_i - eps * self.mab_over_sqrtmab[i])
-                    + self.sqrt_beta_t[i] * (z[:n_sample] if isinstance(z, torch.Tensor) else z)
-                )
-                
-                # 更新双倍批次
-                x_i_double = torch.cat([x_i, x_i])
-                
-                if i % 20 == 0 or i == self.n_T or i < 8:
-                    x_i_store.append(x_i.detach().cpu().numpy())
+        
+        x_i_store = []
+        for i in range(self.n_T, 0, -1):
+            print(f'sampling timestep {i}',end='\r')
+            t_is = torch.tensor([i / self.n_T]).to(device)
+            t_is_double = t_is.repeat(2*n_sample)
+            
+            # 生成噪声
+            z = torch.randn_like(x_i_double) if i > 1 else 0
+            
+            # 确保context_mask维度正确
+            current_context_mask = context_mask_double.view(-1, 1)
+            
+            # 预测噪声
+            eps = self.nn_model(x_i_double, c_i_double, t_is_double, current_context_mask)
+            eps1, eps2 = eps.chunk(2)  # 将预测分成两半
+            eps = (1 + guide_w) * eps1 - guide_w * eps2
+            
+            # 更新采样
+            x_i = (
+                self.oneover_sqrta[i] * (x_i - eps * self.mab_over_sqrtmab[i])
+                + self.sqrt_beta_t[i] * (z[:n_sample] if isinstance(z, torch.Tensor) else z)
+            )
+            
+            # 更新双倍批次
+            x_i_double = torch.cat([x_i, x_i])
+            
+            if i % 20 == 0 or i == self.n_T or i < 8:
+                x_i_store.append(x_i.detach().cpu().numpy())
         
         x_i_store = np.array(x_i_store)
         return x_i, x_i_store
 
 
 class CustomDataset(torch.utils.data.Dataset):
-    def __init__(self, project_dir, transform=None):
+    def __init__(self, data_dir, transform=None, crop_size=256, multi_label=False):
         """
-        Args:
-            project_dir: Supervisely格式数据集的根目录
-            transform: 图像转换
+        参数:
+            data_dir (str): 数据集根目录路径
+            transform: 图像转换操作
+            crop_size: 裁剪区域大小
+            multi_label: 是否使用多标签模式
         """
-        self.project_dir = project_dir
+        self.data_dir = data_dir
         self.transform = transform
+        self.crop_size = crop_size
+        self.multi_label = multi_label
         
-        # 创建Supervisely项目对象
-        self.project = sly.Project(project_dir, sly.OpenMode.READ)
-        print(f"打开项目: {self.project.name}")
-        print(f"项目中的图像总数: {self.project.total_items}")
+        # 设置图像和标注目录
+        self.img_dir = os.path.join(data_dir, "train/img")
+        self.ann_dir = os.path.join(data_dir, "train/ann")
         
-        # 获取类别信息
-        self.classes = [cls.name for cls in self.project.meta.obj_classes]
+        # 创建数据索引
+        self.data_index = []
+        
+        # 加载标注数据和图像列表
+        self.annotations, self.classes = self._load_annotations()
         self.class_to_idx = {cls_name: i for i, cls_name in enumerate(self.classes)}
-        print(f"发现 {len(self.classes)} 个类别: {self.classes}")
-        print(f"类别索引映射: {self.class_to_idx}")
+        self._create_index()
+        print(f"找到 {len(self.classes)} 个类别: {self.classes}")
+        print(f"总共找到 {len(self.data_index)} 个损坏区域样本")
+
+    def _load_annotations(self):
+        """加载所有标注文件并收集类别和边界框信息"""
+        annotations = {}
+        classes = set()
         
-        # 收集所有图像和标注
-        self.samples = []
-        for dataset in self.project.datasets:
-            print(f"处理数据集: {dataset.name}")
-            for item_name, image_path, ann_path in dataset.items():
-                self.samples.append((image_path, ann_path))
+        for ann_file in os.listdir(self.ann_dir):
+            if ann_file.endswith('.json'):
+                with open(os.path.join(self.ann_dir, ann_file), 'r') as f:
+                    try:
+                        annotation_data = json.load(f)
+                        img_name = ann_file.replace('.json', '')
+                        img_path = os.path.join(self.img_dir, img_name)
+                        
+                        objects_info = []
+                        for obj in annotation_data.get('objects', []):
+                            class_title = obj.get('classTitle')
+                            if class_title and 'points' in obj:
+                                points = obj['points']['exterior']
+                                x_coords = [p[0] for p in points]
+                                y_coords = [p[1] for p in points]
+                                bbox = {
+                                    'x_min': min(x_coords),
+                                    'y_min': min(y_coords),
+                                    'x_max': max(x_coords),
+                                    'y_max': max(y_coords),
+                                    'class': class_title
+                                }
+                                objects_info.append(bbox)
+                                classes.add(class_title)
+                        
+                        if objects_info and os.path.exists(img_path):
+                            annotations[img_name] = {
+                                'objects': objects_info,
+                                'path': img_path
+                            }
+                            
+                    except json.JSONDecodeError:
+                        print(f"警告: 无法解析标注文件 {ann_file}")
+                        continue
+        
+        return annotations, sorted(list(classes))
+
+    def _create_index(self):
+        """创建数据索引，每个损坏区域作为一个独立样本"""
+        for img_name, ann_data in self.annotations.items():
+            for obj_idx, obj in enumerate(ann_data['objects']):
+                self.data_index.append({
+                    'img_name': img_name,
+                    'obj_idx': obj_idx,
+                    'bbox': obj,
+                    'path': ann_data['path']
+                })
+
+    def _get_multi_label(self, img_name, current_bbox, crop_coords):
+        """获取裁剪区域内的所有标签
+        
+        Args:
+            img_name: 图片名称
+            current_bbox: 当前主要的边界框
+            crop_coords: 实际裁剪区域的坐标 (x_min, y_min, x_max, y_max)
+        """
+        labels = torch.zeros(len(self.classes))
+        
+        # 将当前类别标记为1
+        labels[self.class_to_idx[current_bbox['class']]] = 1
+        
+        if self.multi_label:
+            crop_x_min, crop_y_min, crop_x_max, crop_y_max = crop_coords
+            
+            # 检查所有边界框与裁剪区域的重叠情况
+            for obj in self.annotations[img_name]['objects']:
+                # 计算重叠区域
+                overlap_x_min = max(crop_x_min, obj['x_min'])
+                overlap_y_min = max(crop_y_min, obj['y_min'])
+                overlap_x_max = min(crop_x_max, obj['x_max'])
+                overlap_y_max = min(crop_y_max, obj['y_max'])
                 
-        print(f"总共收集到 {len(self.samples)} 个样本")
-    
-    def __len__(self):
-        return len(self.samples)
-    
+                # 计算重叠区域的面积
+                if overlap_x_max > overlap_x_min and overlap_y_max > overlap_y_min:
+                    overlap_area = (overlap_x_max - overlap_x_min) * (overlap_y_max - overlap_y_min)
+                    
+                    # 计算原始边界框的面积
+                    bbox_area = (obj['x_max'] - obj['x_min']) * (obj['y_max'] - obj['y_min'])
+                    
+                    # 如果重叠区域超过原始边界框面积的阈值，将该类别标记为1
+                    overlap_ratio = overlap_area / bbox_area
+                    if overlap_ratio > 0.3:  # 可以调整这个阈值
+                        labels[self.class_to_idx[obj['class']]] = 1
+        
+        return labels
+
+    def _crop_damage_area(self, image, bbox, padding_ratio=1.0):
+        """根据边界框裁剪损坏区域，并返回裁剪坐标"""
+        # 计算边界框的原始尺寸
+        width = bbox['x_max'] - bbox['x_min']
+        height = bbox['y_max'] - bbox['y_min']
+        
+        # 计算需要扩展的padding大小
+        padding_x = int(width * padding_ratio)
+        padding_y = int(height * padding_ratio)
+        
+        # 确保扩展后的区域不会超出图像边界
+        x_min = max(0, bbox['x_min'] - padding_x)
+        y_min = max(0, bbox['y_min'] - padding_y)
+        x_max = min(image.size[0], bbox['x_max'] + padding_x)
+        y_max = min(image.size[1], bbox['y_max'] + padding_y)
+        
+        # 确保裁剪区域是正方形（取较大的边长）
+        width = x_max - x_min
+        height = y_max - y_min
+        max_size = max(width, height)
+        
+        # 扩展较小的边以创建正方形
+        if width < max_size:
+            diff = max_size - width
+            x_min = max(0, x_min - diff // 2)
+            x_max = min(image.size[0], x_max + diff // 2)
+        if height < max_size:
+            diff = max_size - height
+            y_min = max(0, y_min - diff // 2)
+            y_max = min(image.size[1], y_max + diff // 2)
+        
+        # 最后确保区域仍然是正方形
+        final_size = min(x_max - x_min, y_max - y_min)
+        center_x = (x_min + x_max) // 2
+        center_y = (y_min + y_max) // 2
+        
+        x_min = center_x - final_size // 2
+        x_max = center_x + final_size // 2
+        y_min = center_y - final_size // 2
+        y_max = center_y + final_size // 2
+        
+        # 裁剪区域
+        cropped = image.crop((x_min, y_min, x_max, y_max))
+        return cropped, (x_min, y_min, x_max, y_max)
+
     def __getitem__(self, idx):
-        image_path, ann_path = self.samples[idx]
+        """获取指定索引的样本"""
+        sample_info = self.data_index[idx]
+        img_name = sample_info['img_name']
+        bbox = sample_info['bbox']
         
         try:
-            # 读取图像
-            image = sly.image.read(image_path)  # 返回RGB格式
-            original_height, original_width = image.shape[:2]
-            image = Image.fromarray(image)
+            # 读取原始图像
+            image = Image.open(sample_info['path']).convert('RGB')
             
-            # 读取标注 - 添加调试信息
-            print(f"\n处理图像: {image_path}")
-            ann_json = json.load(open(ann_path))
-            ann = sly.Annotation.from_json(ann_json, self.project.meta)
-            print(f"标注文件内容: {ann_json}")  # 检查原始标注内容
+            # 裁剪损坏区域，同时获取裁剪坐标
+            cropped_image, crop_coords = self._crop_damage_area(image, bbox)
             
-            # 创建one-hot标签和边界框列表
-            label_tensor = torch.zeros(len(self.classes))
-            boxes = []
+            # 调整裁剪区域大小
+            cropped_image = cropped_image.resize((self.crop_size, self.crop_size))
             
-            # 处理每个标注对象 - 添加调试信息
-            print(f"标注对象数量: {len(ann.labels)}")
-            for label in ann.labels:
-                class_name = label.obj_class.name
-                class_idx = self.class_to_idx[class_name]
-                print(f"处理类别: {class_name} (索引: {class_idx})")
-                
-                label_tensor[class_idx] = 1
-                
-                # 获取边界框坐标
-                bbox = label.geometry.to_bbox()
-                print(f"边界框坐标: left={bbox.left}, top={bbox.top}, right={bbox.right}, bottom={bbox.bottom}")
-                
-                # 归一化坐标到 [0,1] 范围
-                x1 = bbox.left / original_width
-                y1 = bbox.top / original_height
-                x2 = bbox.right / original_width
-                y2 = bbox.bottom / original_height
-                
-                # 添加到边界框列表 [x1, y1, x2, y2, class_idx]
-                boxes.append([x1, y1, x2, y2, class_idx])
+            # 获取标签（考虑裁剪区域内有损坏）
+            label_tensor = self._get_multi_label(img_name, bbox, crop_coords)
             
-            # 检查标签和边界框 - 添加调试信息
-            print(f"最终标签张量: {label_tensor}")
-            print(f"标签中检测到的类别: {[self.classes[i] for i, val in enumerate(label_tensor) if val == 1]}")
-            print(f"边界框数量: {len(boxes)}")
-            
-            # 转换边界框列表为张量
-            boxes_tensor = torch.tensor(boxes) if boxes else torch.zeros((0, 5))
-            
-            # 应用图像转换
             if self.transform:
-                image = self.transform(image)
-            
-            # 返回图像、类别标签和边界框信息
-            return {
-                'image': image,
-                'labels': label_tensor,
-                'boxes': boxes_tensor,
-                'image_path': image_path,
-                'original_size': (original_height, original_width)
-            }
+                cropped_image = self.transform(cropped_image)
+                
+            return cropped_image, label_tensor
             
         except Exception as e:
-            print(f"加载图像 {image_path} 时出错: {str(e)}")
-            print(f"错误详情:", e.__class__.__name__)
-            import traceback
-            traceback.print_exc()  # 打印完整的错误堆栈
-            # 返回数据集中的下一个样本
+            print(f"加载图像 {sample_info['path']} 时出错: {str(e)}")
             return self.__getitem__((idx + 1) % len(self))
+
+    def __len__(self):
+        """返回数据集中的样本总数"""
+        return len(self.data_index)
 
 
 def train_custom_dataset():
-    # 修改训练参数
-    n_epoch = 500
-    batch_size = 1
-    n_T = 1000
-    device = "cuda:0" if torch.cuda.is_available() else "cpu"
-    lrate = 2e-4
-    save_dir = './data'
+    # 修改和优化训练参数
+    n_epoch = 400
+    batch_size = 2  # 减小批次大小以适应512分辨率
+    n_T = 400
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    base_lr = 2e-4
+    save_dir = './data/'
     ws_test = [0.0, 2.0]
     save_model = True
     
-    # 确保保存目录存在
-    os.makedirs(save_dir, exist_ok=True)
-
     # 数据预处理
     tf = transforms.Compose([
-        transforms.Resize((256, 256)),
-        transforms.RandomHorizontalFlip(p=0.5),
-        transforms.RandomRotation(10),
-        transforms.ColorJitter(brightness=0.2, contrast=0.2),
         transforms.ToTensor(),
         transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
     ])
     
-    # 加载Supervisely格式的数据集
-    dataset = CustomDataset("./road-damage-detector-DatasetNinja", transform=tf)
+    # 创建数据集和加载器
+    dataset = CustomDataset(
+        data_dir="./road-damage-detector-DatasetNinja",
+        transform=tf,
+        crop_size=512,
+        multi_label=True  # 启用多标签模式
+    )
     
     # 创建数据加载器
     dataloader = DataLoader(
         dataset, 
         batch_size=batch_size, 
         shuffle=True, 
-        num_workers=5,
-        pin_memory=True
+        num_workers=8,  # 增加工作进程数
+        pin_memory=True,
+        drop_last=True,  # 丢弃不完整的批次
+        persistent_workers=True  # 保持工作进程存活
     )
     
     # 创建模型实例
@@ -441,58 +534,90 @@ def train_custom_dataset():
     )
     ddpm.to(device)
     
-    # 优化器
-    optim = torch.optim.Adam(ddpm.parameters(), lr=lrate)
-    
-    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
-        optim, mode='min', factor=0.5, patience=10, verbose=True
+    # 使用自定义优化器配置
+    optim = torch.optim.AdamW(  # 使用AdamW优化器
+        ddpm.parameters(),
+        lr=base_lr,
+        betas=(0.9, 0.999),
+        weight_decay=0.01  # 添加权重衰减
     )
-
-    specified_path = './data/runs/diffusion_training'
-
-    # 检查路径是否存在，如果不存在则创建它
-    if not os.path.exists(specified_path):
-        os.makedirs(specified_path)
-
-    # 现在创建 SummaryWriter 实例
-    writer = SummaryWriter(specified_path)
-    losses = []
     
-    # 训练循环
+    # 使用OneCycleLR而不是CosineAnnealingLR
+    scheduler = torch.optim.lr_scheduler.OneCycleLR(
+        optim,
+        max_lr=base_lr,
+        epochs=n_epoch,
+        steps_per_epoch=len(dataloader),
+        pct_start=0.3
+    )
+    
+    # 混合精度训练设置
+    use_amp = True
+    scaler = GradScaler(enabled=use_amp)
+    
+    # EMA模型
+    ema_model = copy.deepcopy(ddpm).eval().requires_grad_(False)
+    
+    if hasattr(torch, 'compile'):
+        ddpm = torch.compile(ddpm)
+        ema_model = torch.compile(ema_model)
+
+    # 训练循环优化
+    accumulation_steps = 4
+    
+    # 添加损失记录列表
+    losses = []
+    loss_ema = None
+    
     for ep in range(n_epoch):
         print(f'Epoch {ep}')
         ddpm.train()
-        
-        epoch_losses = []  # 记录每个epoch的所有loss
-        
+        epoch_losses = []
         pbar = tqdm(dataloader)
-        loss_ema = None
         
-        for x, c in pbar:
-            optim.zero_grad()
+        for batch_idx, (x, c) in enumerate(pbar):
             x = x.to(device)
             c = c.to(device)
-            loss = ddpm(x, c)
-            loss.backward()
             
-            if loss_ema is None:
-                loss_ema = loss.item()
-            else:
-                loss_ema = 0.95 * loss_ema + 0.05 * loss.item()
+            with autocast(device_type=device, enabled=use_amp):
+                loss = ddpm(x, c)
+                loss = loss / accumulation_steps
             
-            epoch_losses.append(loss.item())
-            pbar.set_description(f"loss: {loss_ema:.4f}")
-            optim.step()
+            scaler.scale(loss).backward()
+            
+            if (batch_idx + 1) % accumulation_steps == 0:
+                if use_amp:
+                    scaler.unscale_(optim)
+                torch.nn.utils.clip_grad_norm_(ddpm.parameters(), max_norm=1.0)
+                
+                scaler.step(optim)
+                scaler.update()
+                optim.zero_grad(set_to_none=True)
+                
+                # 更新EMA模型
+                with torch.no_grad():
+                    for ema_param, param in zip(ema_model.parameters(), ddpm.parameters()):
+                        ema_param.data.mul_(0.9999).add_(param.data, alpha=0.0001)
+                
+                current_loss = loss.item() * accumulation_steps
+                epoch_losses.append(current_loss)
+                
+                # 更新损失EMA
+                if loss_ema is None:
+                    loss_ema = current_loss
+                else:
+                    loss_ema = 0.95 * loss_ema + 0.05 * current_loss
+                
+                pbar.set_description(f"loss: {loss_ema:.4f}")
         
-        # 计算并记录每个epoch的平均损失
+        # 计算并保存每个epoch的平均损失
         avg_loss = sum(epoch_losses) / len(epoch_losses)
         losses.append(avg_loss)
-        writer.add_scalar('Loss/train', avg_loss, ep)
         
         # 更新学习率
-        scheduler.step(avg_loss)
+        scheduler.step()
         
-        # 每10个epoch绘制并保存损失曲线
+        # 每10个epoch绘制和保存损失曲线
         if ep % 10 == 0 or ep == n_epoch-1:
             plt.figure(figsize=(10, 5))
             plt.plot(losses, label='Training Loss')
@@ -504,32 +629,31 @@ def train_custom_dataset():
             plt.savefig(f'{save_dir}/loss_curve.png')
             plt.close()
         
-        # 每个epoch保存样本
+        # 生成样本和评估
         if ep % 10 == 0 or ep == n_epoch-1:
-            ddpm.eval()
+            ema_model.eval()
             with torch.no_grad():
-                for w_i, w in enumerate(ws_test):
-                    # 为每个类别生成样本
-                    for class_idx, class_name in enumerate(dataset.classes):
-                        n_sample = 4
-                        # 创建目标标签
-                        target_labels = torch.zeros(n_sample, len(dataset.classes))
-                        target_labels[:, class_idx] = 1  # 设置目标类别
-                        target_labels = target_labels.to(device)
-                        
-                        # 生成样本
-                        x_gen, x_gen_store = ddpm.sample(n_sample, (3, 256, 256), device, 
-                                                         target_labels=target_labels, guide_w=w)
-                        
-                        # 保存生成的图片
-                        grid = make_grid(x_gen * 0.5 + 0.5, nrow=2)
-                        save_image(grid, 
-                                 f"{save_dir}/ep{ep}_w{w}_{class_name}.png")
-                        
-        # 保存模型
-        if save_model and ep == n_epoch-1:
-            torch.save(ddpm.state_dict(), f"{save_dir}/model_ep{ep}.pth")
-            print(f'Saved model at {save_dir}/model_ep{ep}.pth')
+                with autocast(device_type=device, enabled=False):
+                    for w_i, w in enumerate(ws_test):
+                        for class_idx, class_name in enumerate(dataset.classes):
+                            n_sample = 4
+                            target_labels = torch.zeros(n_sample, len(dataset.classes))
+                            target_labels[:, class_idx] = 1
+                            target_labels = target_labels.to(device)
+                            
+                            x_gen, _ = ema_model.sample(
+                                n_sample, 
+                                (3, 512, 512), 
+                                device, 
+                                target_labels=target_labels, 
+                                guide_w=w
+                            )
+                            
+                            grid = make_grid(x_gen * 0.5 + 0.5, nrow=2)
+                            save_image(
+                                grid, 
+                                f"{save_dir}/ep{ep}_w{w}_{class_name}.png"
+                            )
     
     # 训练结束后保存最终的损失曲线
     plt.figure(figsize=(10, 5))
@@ -541,10 +665,6 @@ def train_custom_dataset():
     plt.grid(True)
     plt.savefig(f'{save_dir}/final_loss_curve.png')
     plt.close()
-    
-    # 关闭tensorboard writer
-    writer.close()
 
 if __name__ == "__main__":
     train_custom_dataset()
-
