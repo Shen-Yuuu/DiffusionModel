@@ -5,16 +5,12 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.utils.data import DataLoader
 from torchvision import models, transforms
-from torchvision.datasets import MNIST
 from torchvision.utils import save_image, make_grid
 import matplotlib.pyplot as plt
-from matplotlib.animation import FuncAnimation, PillowWriter
 import numpy as np
 import os
 from PIL import Image
-import tarfile
 import json
-import io
 import random
 from torch.amp import autocast, GradScaler
 from torch.optim.lr_scheduler import CosineAnnealingLR
@@ -243,52 +239,52 @@ class DDPM(nn.Module):
 
     def sample(self, n_sample, size, device, target_labels=None, guide_w=0.0):
         """
-        target_labels: [n_sample, n_classes] 指定要生成的目标类别的one-hot编码
+        简化版的采样方法
+        参数:
+            n_sample: 生成样本数量
+            size: 图像大小 (C, H, W)
+            device: 计算设备
+            target_labels: 目标类别标签
+            guide_w: 引导权重
         """
+        # 初始化随机噪声
         x_i = torch.randn(n_sample, *size).to(device)
         
+        # 如果没有指定标签，随机生成
         if target_labels is None:
-            # 如果没有指定标签，随机生成一些标签组合
             target_labels = torch.randint(0, 2, (n_sample, self.n_classes)).float().to(device)
         
-        context_mask = torch.zeros(n_sample).to(device)
-        
-        # 双倍批次大小
-        x_i_double = torch.cat([x_i, x_i])  # [2*n_sample, C, H, W]
-        c_i_double = torch.cat([target_labels, target_labels])  # [2*n_sample, n_classes]
-        context_mask_double = torch.cat([context_mask, torch.ones_like(context_mask)])  # [2*n_sample]
-        
-        x_i_store = []
-        for i in range(self.n_T, 0, -1):
-            print(f'sampling timestep {i}',end='\r')
+        # 使用tqdm显示进度
+        for i in tqdm(range(self.n_T, 0, -1), desc="生成采样"):
             t_is = torch.tensor([i / self.n_T]).to(device)
-            t_is_double = t_is.repeat(2*n_sample)
             
-            # 生成噪声
-            z = torch.randn_like(x_i_double) if i > 1 else 0
+            # 只在最后一步不添加噪声
+            z = torch.randn_like(x_i) if i > 1 else 0
             
-            # 确保context_mask维度正确
-            current_context_mask = context_mask_double.view(-1, 1)
-            
-            # 预测噪声
-            eps = self.nn_model(x_i_double, c_i_double, t_is_double, current_context_mask)
-            eps1, eps2 = eps.chunk(2)  # 将预测分成两半
-            eps = (1 + guide_w) * eps1 - guide_w * eps2
+            # 条件生成
+            if guide_w > 0:
+                # 计算有条件和无条件的预测
+                with torch.no_grad():
+                    # 有条件预测
+                    eps = self.nn_model(x_i, target_labels, t_is.repeat(n_sample), 
+                                      torch.zeros(n_sample, 1).to(device))
+                    # 无条件预测
+                    eps_uncond = self.nn_model(x_i, target_labels, t_is.repeat(n_sample), 
+                                             torch.ones(n_sample, 1).to(device))
+                    # 组合预测结果
+                    eps = (1 + guide_w) * eps - guide_w * eps_uncond
+            else:
+                # 普通预测
+                eps = self.nn_model(x_i, target_labels, t_is.repeat(n_sample), 
+                                  torch.zeros(n_sample, 1).to(device))
             
             # 更新采样
             x_i = (
                 self.oneover_sqrta[i] * (x_i - eps * self.mab_over_sqrtmab[i])
-                + self.sqrt_beta_t[i] * (z[:n_sample] if isinstance(z, torch.Tensor) else z)
+                + self.sqrt_beta_t[i] * z
             )
-            
-            # 更新双倍批次
-            x_i_double = torch.cat([x_i, x_i])
-            
-            if i % 20 == 0 or i == self.n_T or i < 8:
-                x_i_store.append(x_i.detach().cpu().numpy())
         
-        x_i_store = np.array(x_i_store)
-        return x_i, x_i_store
+        return x_i
 
 
 class CustomDataset(torch.utils.data.Dataset):
@@ -411,7 +407,7 @@ class CustomDataset(torch.utils.data.Dataset):
         return labels
 
     def _crop_damage_area(self, image, bbox, padding_ratio=1.0):
-        """根据边界框裁剪损坏区域，并返回裁剪坐标"""
+        """根据边界裁剪损坏区域，并返回裁剪坐标"""
         # 计算边界框的原始尺寸
         width = bbox['x_max'] - bbox['x_min']
         height = bbox['y_max'] - bbox['y_min']
@@ -555,13 +551,6 @@ def train_custom_dataset():
     use_amp = True
     scaler = GradScaler(enabled=use_amp)
     
-    # EMA模型
-    ema_model = copy.deepcopy(ddpm).eval().requires_grad_(False)
-    
-    if hasattr(torch, 'compile'):
-        ddpm = torch.compile(ddpm)
-        ema_model = torch.compile(ema_model)
-
     # 训练循环优化
     accumulation_steps = 4
     
@@ -594,15 +583,9 @@ def train_custom_dataset():
                 scaler.update()
                 optim.zero_grad(set_to_none=True)
                 
-                # 更新EMA模型
-                with torch.no_grad():
-                    for ema_param, param in zip(ema_model.parameters(), ddpm.parameters()):
-                        ema_param.data.mul_(0.9999).add_(param.data, alpha=0.0001)
-                
                 current_loss = loss.item() * accumulation_steps
                 epoch_losses.append(current_loss)
                 
-                # 更新损失EMA
                 if loss_ema is None:
                     loss_ema = current_loss
                 else:
@@ -631,7 +614,7 @@ def train_custom_dataset():
         
         # 生成样本和评估
         if ep % 10 == 0 or ep == n_epoch-1:
-            ema_model.eval()
+            ddpm.eval()  # 使用ddpm替代ema_model
             with torch.no_grad():
                 with autocast(device_type=device, enabled=False):
                     for w_i, w in enumerate(ws_test):
@@ -641,7 +624,7 @@ def train_custom_dataset():
                             target_labels[:, class_idx] = 1
                             target_labels = target_labels.to(device)
                             
-                            x_gen, _ = ema_model.sample(
+                            x_gen, _ = ddpm.sample(  # 使用ddpm替代ema_model
                                 n_sample, 
                                 (3, 512, 512), 
                                 device, 
@@ -654,6 +637,7 @@ def train_custom_dataset():
                                 grid, 
                                 f"{save_dir}/ep{ep}_w{w}_{class_name}.png"
                             )
+            ddpm.train()  # 评估后将模型切回训练模式
     
     # 训练结束后保存最终的损失曲线
     plt.figure(figsize=(10, 5))
