@@ -1,16 +1,17 @@
-
-from typing import Dict, Tuple
 from tqdm import tqdm
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.utils.data import DataLoader
-from torchvision import models, transforms
-from torchvision.datasets import MNIST
+from torchvision import transforms
 from torchvision.utils import save_image, make_grid
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation, PillowWriter
 import numpy as np
+import os
+from torch.utils.data import Dataset
+from PIL import Image
+import xml.etree.ElementTree as ET
 
 class ResidualConvBlock(nn.Module):
     def __init__(
@@ -154,20 +155,26 @@ class ContextUnet(nn.Module):
         context_mask = (-1*(1-context_mask)) # need to flip 0 <-> 1
         c = c * context_mask
         
-        # embed context, time step
-        cemb1 = self.contextembed1(c).view(-1, self.n_feat * 2, 1, 1)
-        temb1 = self.timeembed1(t).view(-1, self.n_feat * 2, 1, 1)
-        cemb2 = self.contextembed2(c).view(-1, self.n_feat, 1, 1)
-        temb2 = self.timeembed2(t).view(-1, self.n_feat, 1, 1)
-
-        # could concatenate the context embedding here instead of adaGN
-        # hiddenvec = torch.cat((hiddenvec, temb1, cemb1), 1)
+        # 嵌入处理
+        cemb1 = self.contextembed1(c)
+        temb1 = self.timeembed1(t)
+        cemb2 = self.contextembed2(c)
+        temb2 = self.timeembed2(t)
+        
+        # 调整维度
+        cemb1 = cemb1.view(-1, self.n_feat * 2, 1, 1).expand(-1, -1, down2.shape[2], down2.shape[3])
+        temb1 = temb1.view(-1, self.n_feat * 2, 1, 1).expand(-1, -1, down2.shape[2], down2.shape[3])
+        cemb2 = cemb2.view(-1, self.n_feat, 1, 1).expand(-1, -1, down1.shape[2], down1.shape[3])
+        temb2 = temb2.view(-1, self.n_feat, 1, 1).expand(-1, -1, down1.shape[2], down1.shape[3])
 
         up1 = self.up0(hiddenvec)
-        # up2 = self.up1(up1, down2) # if want to avoid add and multiply embeddings
-        up2 = self.up1(cemb1*up1+ temb1, down2)  # add and multiply embeddings
-        up3 = self.up2(cemb2*up2+ temb2, down1)
+        up1 = F.interpolate(up1, size=down2.shape[2:])
+        up2 = self.up1(cemb1*up1 + temb1, down2)
+        up2 = F.interpolate(up2, size=down1.shape[2:])
+        up3 = self.up2(cemb2*up2 + temb2, down1)
+        up3 = F.interpolate(up3, size=x.shape[2:])
         out = self.out(torch.cat((up3, x), 1))
+        
         return out
 
 
@@ -236,78 +243,216 @@ class DDPM(nn.Module):
         return self.loss_mse(noise, self.nn_model(x_t, c, _ts / self.n_T, context_mask))
 
     def sample(self, n_sample, size, device, guide_w = 0.0):
-        # we follow the guidance sampling scheme described in 'Classifier-Free Diffusion Guidance'
-        # to make the fwd passes efficient, we concat two versions of the dataset,
-        # one with context_mask=0 and the other context_mask=1
-        # we then mix the outputs with the guidance scale, w
-        # where w>0 means more guidance
-
-        x_i = torch.randn(n_sample, *size).to(device)  # x_T ~ N(0, 1), sample initial noise
-        c_i = torch.arange(0,10).to(device) # context for us just cycles throught the mnist labels
-        c_i = c_i.repeat(int(n_sample/c_i.shape[0]))
-
-        # don't drop context at test time
+        """
+        修改采样函数以确保维度匹配
+        """
+        x_i = torch.randn(n_sample, *size).to(device)  # x_T ~ N(0, 1)
+        
+        # 确保类别数量正确
+        c_i = torch.arange(0, min(n_sample, self.nn_model.n_classes)).to(device)
+        c_i = c_i.repeat(int(np.ceil(n_sample/len(c_i))))[:n_sample]
+        
+        # 创建上下文掩码
         context_mask = torch.zeros_like(c_i).to(device)
-
-        # double the batch
-        c_i = c_i.repeat(2)
-        context_mask = context_mask.repeat(2)
-        context_mask[n_sample:] = 1. # makes second half of batch context free
-
-        x_i_store = [] # keep track of generated steps in case want to plot something 
+        
+        # 双倍批次大小
+        x_i_store = []
         print()
         for i in range(self.n_T, 0, -1):
             print(f'sampling timestep {i}',end='\r')
             t_is = torch.tensor([i / self.n_T]).to(device)
-            t_is = t_is.repeat(n_sample,1,1,1)
-
-            # double batch
-            x_i = x_i.repeat(2,1,1,1)
-            t_is = t_is.repeat(2,1,1,1)
-
-            z = torch.randn(n_sample, *size).to(device) if i > 1 else 0
-
-            # split predictions and compute weighting
-            eps = self.nn_model(x_i, c_i, t_is, context_mask)
+            t_is = t_is.repeat(n_sample,1)  # 修改时间步的形状
+            
+            # 双倍批次
+            x_i_double = x_i.repeat(2,1,1,1)
+            t_is_double = t_is.repeat(2,1)
+            c_i_double = c_i.repeat(2)
+            context_mask_double = context_mask.repeat(2)
+            context_mask_double[n_sample:] = 1.
+            
+            # 预测噪声
+            eps = self.nn_model(x_i_double, c_i_double, t_is_double, context_mask_double)
+            
+            # 分离预测结果
             eps1 = eps[:n_sample]
             eps2 = eps[n_sample:]
             eps = (1+guide_w)*eps1 - guide_w*eps2
-            x_i = x_i[:n_sample]
+            
+            # 更新采样
+            z = torch.randn(n_sample, *size).to(device) if i > 1 else 0
             x_i = (
                 self.oneover_sqrta[i] * (x_i - eps * self.mab_over_sqrtmab[i])
                 + self.sqrt_beta_t[i] * z
             )
+            
             if i%20==0 or i==self.n_T or i<8:
                 x_i_store.append(x_i.detach().cpu().numpy())
         
         x_i_store = np.array(x_i_store)
         return x_i, x_i_store
 
+class DroneDataset(Dataset):
+    def __init__(self, img_dir, anno_dir, target_size=128, transform=None):
+        """
+        参数:
+            img_dir (str): 图像目录路径
+            anno_dir (str): XML标注文件目录路径
+            target_size (int): 输出图像的目标尺寸
+            transform (callable, optional): 可选的图像转换
+        """
+        self.img_dir = img_dir
+        self.anno_dir = anno_dir
+        self.target_size = target_size
+        self.transform = transform
+        
+        # 获取所有图像和标注文件
+        self.samples = []
+        self.class_map = {}
+        self.num_classes = 0
+        
+        # 扫描所有XML文件并提取样本
+        for xml_file in os.listdir(anno_dir):
+            if xml_file.endswith('.xml'):
+                xml_path = os.path.join(anno_dir, xml_file)
+                img_name = xml_file.replace('.xml', '.jpg')
+                img_path = os.path.join(img_dir, img_name)
+                
+                if os.path.exists(img_path):
+                    objects = self._parse_xml(xml_path)
+                    for obj in objects:
+                        # 将类别名称映射到数字索引
+                        if obj['name'] not in self.class_map:
+                            self.class_map[obj['name']] = self.num_classes
+                            self.num_classes += 1
+                        
+                        self.samples.append({
+                            'img_path': img_path,
+                            'bbox': obj['bbox'],
+                            'class': self.class_map[obj['name']]
+                        })
 
-def train_mnist():
+    def _parse_xml(self, xml_path):
+        """解析XML文件并提取边界框信息"""
+        tree = ET.parse(xml_path)
+        root = tree.getroot()
+        
+        objects = []
+        for obj in root.findall('object'):
+            name = obj.find('name').text
+            bbox = obj.find('bndbox')
+            xmin = float(bbox.find('xmin').text)
+            ymin = float(bbox.find('ymin').text)
+            xmax = float(bbox.find('xmax').text)
+            ymax = float(bbox.find('ymax').text)
+            
+            objects.append({
+                'name': name,
+                'bbox': [xmin, ymin, xmax, ymax]
+            })
+            
+        return objects
 
-    # hardcoding these here
-    n_epoch = 20
-    batch_size = 256
-    n_T = 400 # 500
-    device = "cuda:0"
-    n_classes = 10
-    n_feat = 128 # 128 ok, 256 better (but slower)
+    def _crop_and_resize(self, image, bbox, expand_ratio=1.5):
+        """裁剪边界框并调整大小为正方形
+        Args:
+            image: PIL Image对象
+            bbox: [xmin, ymin, xmax, ymax] 边界框坐标
+            expand_ratio: 扩充系数，>1 表示扩大裁剪区域
+        """
+        # 扩展边界框为正方形
+        xmin, ymin, xmax, ymax = bbox
+        width = xmax - xmin
+        height = ymax - ymin
+        
+        # 计算正方形边长
+        size = max(width, height) * expand_ratio
+        
+        # 计算中心点
+        center_x = (xmin + xmax) / 2
+        center_y = (ymin + ymax) / 2
+        
+        # 计算扩充后的边界框
+        new_xmin = max(0, center_x - size/2)
+        new_ymin = max(0, center_y - size/2)
+        new_xmax = min(image.size[0], center_x + size/2)
+        new_ymax = min(image.size[1], center_y + size/2)
+        
+        # 裁剪图像
+        cropped = image.crop((new_xmin, new_ymin, new_xmax, new_ymax))
+        
+        # 调整大小
+        resized = cropped.resize((self.target_size, self.target_size), Image.LANCZOS)
+        return resized
+
+    def __len__(self):
+        return len(self.samples)
+
+    def __getitem__(self, idx):
+        sample = self.samples[idx]
+        
+        # 读取图像
+        image = Image.open(sample['img_path']).convert('RGB')
+        
+        # 裁剪并调整大小
+        image = self._crop_and_resize(image, sample['bbox'])
+        
+        # 应用变换
+        if self.transform:
+            image = self.transform(image)
+        
+        return image, sample['class']
+def train_drone():
+    # 修改参数
+    n_epoch = 200
+    batch_size = 2  # 根据您的GPU内存调整
+    n_T = 400
+    device = "cuda:0" if torch.cuda.is_available() else "cpu"
+    n_feat = 128
     lrate = 1e-4
-    save_model = False
-    save_dir = './data/diffusion_outputs10/'
-    ws_test = [0.0, 0.5, 2.0] # strength of generative guidance
+    save_model = True
+    save_dir = './data/diffusion_outputs_drone/'
+    ws_test = [0.0, 2.0]
+    image_size = 128  # 目标图像大小
 
-    ddpm = DDPM(nn_model=ContextUnet(in_channels=1, n_feat=n_feat, n_classes=n_classes), betas=(1e-4, 0.02), n_T=n_T, device=device, drop_prob=0.1)
+    # 创建保存目录
+    os.makedirs(save_dir, exist_ok=True)
+
+    # 数据预处理
+    tf = transforms.Compose([
+        transforms.ToTensor(),
+        transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
+    ])
+
+    # 创建数据集
+    dataset = DroneDataset(
+        img_dir='China_Drone/train/images',
+        anno_dir='China_Drone/train/annotations/xmls',
+        target_size=image_size,
+        transform=tf
+    )
+    
+    # 修改模型以支持RGB图像
+    ddpm = DDPM(
+        nn_model=ContextUnet(
+            in_channels=3,  # 修改为3通道
+            n_feat=n_feat,
+            n_classes=dataset.num_classes
+        ),
+        betas=(1e-4, 0.02),
+        n_T=n_T,
+        device=device,
+        drop_prob=0.1
+    )
     ddpm.to(device)
 
-    # optionally load a model
-    # ddpm.load_state_dict(torch.load("./data/diffusion_outputs/ddpm_unet01_mnist_9.pth"))
+    dataloader = DataLoader(
+        dataset,
+        batch_size=batch_size,
+        shuffle=True,
+        num_workers=4
+    )
 
-    tf = transforms.Compose([transforms.ToTensor()]) # mnist is already normalised 0 to 1
-
-    dataset = MNIST("./data", train=True, download=True, transform=tf)
-    dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True, num_workers=5)
+    # 其余训练逻辑保持不变
     optim = torch.optim.Adam(ddpm.parameters(), lr=lrate)
 
     for ep in range(n_epoch):
@@ -336,19 +481,19 @@ def train_mnist():
         # followed by real images (bottom rows)
         ddpm.eval()
         with torch.no_grad():
-            n_sample = 4*n_classes
+            n_sample = 4*dataset.num_classes
             for w_i, w in enumerate(ws_test):
-                x_gen, x_gen_store = ddpm.sample(n_sample, (1, 28, 28), device, guide_w=w)
+                x_gen, x_gen_store = ddpm.sample(n_sample, (3, image_size, image_size), device, guide_w=w)
 
                 # append some real images at bottom, order by class also
                 x_real = torch.Tensor(x_gen.shape).to(device)
-                for k in range(n_classes):
-                    for j in range(int(n_sample/n_classes)):
+                for k in range(dataset.num_classes):
+                    for j in range(int(n_sample/dataset.num_classes)):
                         try: 
                             idx = torch.squeeze((c == k).nonzero())[j]
                         except:
                             idx = 0
-                        x_real[k+(j*n_classes)] = x[idx]
+                        x_real[k+(j*dataset.num_classes)] = x[idx]
 
                 x_all = torch.cat([x_gen, x_real])
                 grid = make_grid(x_all*-1 + 1, nrow=10)
@@ -357,17 +502,17 @@ def train_mnist():
 
                 if ep%5==0 or ep == int(n_epoch-1):
                     # create gif of images evolving over time, based on x_gen_store
-                    fig, axs = plt.subplots(nrows=int(n_sample/n_classes), ncols=n_classes,sharex=True,sharey=True,figsize=(8,3))
+                    fig, axs = plt.subplots(nrows=int(n_sample/dataset.num_classes), ncols=dataset.num_classes,sharex=True,sharey=True,figsize=(8,3))
                     def animate_diff(i, x_gen_store):
                         print(f'gif animating frame {i} of {x_gen_store.shape[0]}', end='\r')
                         plots = []
-                        for row in range(int(n_sample/n_classes)):
-                            for col in range(n_classes):
+                        for row in range(int(n_sample/dataset.num_classes)):
+                            for col in range(dataset.num_classes):
                                 axs[row, col].clear()
                                 axs[row, col].set_xticks([])
                                 axs[row, col].set_yticks([])
                                 # plots.append(axs[row, col].imshow(x_gen_store[i,(row*n_classes)+col,0],cmap='gray'))
-                                plots.append(axs[row, col].imshow(-x_gen_store[i,(row*n_classes)+col,0],cmap='gray',vmin=(-x_gen_store[i]).min(), vmax=(-x_gen_store[i]).max()))
+                                plots.append(axs[row, col].imshow(-x_gen_store[i,(row*dataset.num_classes)+col,0],cmap='gray',vmin=(-x_gen_store[i]).min(), vmax=(-x_gen_store[i]).max()))
                         return plots
                     ani = FuncAnimation(fig, animate_diff, fargs=[x_gen_store],  interval=200, blit=False, repeat=True, frames=x_gen_store.shape[0])    
                     ani.save(save_dir + f"gif_ep{ep}_w{w}.gif", dpi=100, writer=PillowWriter(fps=5))
@@ -378,4 +523,4 @@ def train_mnist():
             print('saved model at ' + save_dir + f"model_{ep}.pth")
 
 if __name__ == "__main__":
-    train_mnist()
+    train_drone() 
