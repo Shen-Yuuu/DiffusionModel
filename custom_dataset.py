@@ -101,7 +101,11 @@ class UnetDown(nn.Module):
         '''
         process and downscale the image feature maps
         '''
-        layers = [ResidualConvBlock(in_channels, out_channels), nn.MaxPool2d(2)]
+        layers = [
+            ResidualConvBlock(in_channels, out_channels),
+            ResidualConvBlock(out_channels, out_channels),  # 增加一个残差块
+            nn.MaxPool2d(2)
+        ]
         self.model = nn.Sequential(*layers)
 
     def forward(self, x):
@@ -117,7 +121,8 @@ class UnetUp(nn.Module):
         layers = [
             nn.ConvTranspose2d(in_channels, out_channels, 2, 2),
             ResidualConvBlock(out_channels, out_channels),
-            ResidualConvBlock(out_channels, out_channels),
+            ResidualConvBlock(out_channels, out_channels),  # 增加一个残差块
+            ResidualConvBlock(out_channels, out_channels),  # 再增加一个
         ]
         self.model = nn.Sequential(*layers)
 
@@ -146,9 +151,22 @@ class EmbedFC(nn.Module):
         return self.model(x)
 
 
+class LocalEnhancementModule(nn.Module):
+    def __init__(self, in_channels):
+        super(LocalEnhancementModule, self).__init__()
+        self.conv = nn.Sequential(
+            nn.Conv2d(in_channels, in_channels, kernel_size=3, padding=1),
+            nn.GroupNorm(8, in_channels),
+            nn.ReLU(),
+            nn.Conv2d(in_channels, in_channels, kernel_size=3, padding=1),
+        )
+        
+    def forward(self, x, attention_mask):
+        return x + self.conv(x) * (attention_mask > 1.2).float().unsqueeze(1)
+
 
 class ContextUnet(nn.Module):
-    def __init__(self, in_channels=3, n_feat = 256, n_classes=10):
+    def __init__(self, in_channels=3, n_feat = 128, n_classes=10):
         super(ContextUnet, self).__init__()
 
         self.in_channels = in_channels
@@ -191,6 +209,8 @@ class ContextUnet(nn.Module):
             nn.Conv2d(n_feat, self.in_channels, 3, 1, 1),
         )
 
+        self.local_enhance = LocalEnhancementModule(n_feat)
+
     def forward(self, x, c, t, context_mask):
         x = self.init_conv(x)
         
@@ -226,6 +246,7 @@ class ContextUnet(nn.Module):
         up3 = self.up2(cemb2*up2 + temb2, down3)
         up4 = self.up3(up3, down2)
         up5 = self.up4(up4, down1)
+        up5 = self.local_enhance(up5, context_mask)
         
         out = self.out(torch.cat((up5, x), 1))
         return out
@@ -264,6 +285,7 @@ class DDPM(nn.Module):
     def __init__(self, nn_model, betas, n_T, device, drop_prob=0.1):
         super(DDPM, self).__init__()
         self.nn_model = nn_model.to(device)
+        self.scaler = torch.cuda.amp.GradScaler()
 
         # register_buffer allows accessing dictionary produced by ddpm_schedules
         # e.g. can access self.sqrtab later
@@ -290,6 +312,7 @@ class DDPM(nn.Module):
 
         # dropout context with some probability
         context_mask = torch.bernoulli(torch.ones_like(c,dtype=torch.float) * (1 - self.drop_prob)).to(self.device)
+        
         # 预测噪声
         predicted_noise = self.nn_model(x_t, c, _ts / self.n_T, context_mask)
         
@@ -298,15 +321,27 @@ class DDPM(nn.Module):
         attention_mask = attention_mask.unsqueeze(1).repeat(1, 3, 1, 1)  # 扩展到3通道
         
         # 计算加权MSE损失
-        weighted_mask = torch.where(attention_mask > 0.5, 
-                              torch.tensor(1.5).to(self.device),  
-                              torch.tensor(0.5).to(self.device))
+        weighted_mask = torch.where(attention_mask > 1.2, 
+                      torch.tensor(3.0).to(self.device),  # 从1.7提高到3.0
+                      torch.where(attention_mask > 0.8, 
+                          torch.tensor(1.0).to(self.device), 
+                          torch.tensor(0.5).to(self.device)))  # 背景从0.3提高到0.5
+        
         
         loss = (noise - predicted_noise)**2
         weighted_loss = loss * weighted_mask
         
-        
-        return weighted_loss.mean()
+        high_attention_regions = (attention_mask > 1.2).float().unsqueeze(1)
+        feature_consistency_loss = torch.mean(
+            torch.abs(
+                predicted_noise * high_attention_regions - 
+                noise * high_attention_regions
+            )
+        ) * 2.0  # 额外权重
+
+        total_loss = weighted_loss.mean() + feature_consistency_loss
+
+        return total_loss
 
     def sample(self, n_sample, size, device, guide_w = 0.0,refine_steps=2):
         # we follow the guidance sampling scheme described in 'Classifier-Free Diffusion Guidance'
@@ -316,6 +351,7 @@ class DDPM(nn.Module):
         # where w>0 means more guidance
 
         x_i = torch.randn(n_sample, *size).to(device)  # x_T ~ N(0, 1), sample initial noise
+        
         c_i = torch.arange(0,self.n_classes).to(device) # context for us just cycles throught the mnist labels
         c_i = c_i.repeat(int(n_sample/c_i.shape[0]))
 
@@ -346,11 +382,10 @@ class DDPM(nn.Module):
             eps2 = eps[n_sample:]
             eps = (1+guide_w)*eps1 - guide_w*eps2
             x_i = x_i[:n_sample]
-            for _ in range(refine_steps):
-                x_i = (
-                    self.oneover_sqrta[i] * (x_i - eps * self.mab_over_sqrtmab[i])
-                    + self.sqrt_beta_t[i] * z
-                )
+            x_i = (
+                self.oneover_sqrta[i] * (x_i - eps * self.mab_over_sqrtmab[i])
+                + self.sqrt_beta_t[i] * z
+            )
             if i%20==0 or i==self.n_T or i<8:
                 x_i_store.append(x_i.detach().cpu().numpy())
         
@@ -404,41 +439,48 @@ class CustomDataset(torch.utils.data.Dataset):
         orig_w = int(root.find('.//width').text)
         orig_h = int(root.find('.//height').text)
         
-        # 创建attention mask
-        attention_mask = torch.zeros((256, 256))
-        xmin_scaled = max(0, min(255, round(xmin * 256 / orig_w)))
-        xmax_scaled = max(0, min(255, round(xmax * 256 / orig_w)))
-        ymin_scaled = max(0, min(255, round(ymin * 256 / orig_h)))
-        ymax_scaled = max(0, min(255, round(ymax * 256 / orig_h)))
+        # 创建attention mask - 初始设置所有区域为0.5
+        attention_mask = torch.ones((128, 128)) * 0.5
         
-        # 边界框区域设置为1.0，其他区域设置为0.3
-        attention_mask[ymin_scaled:ymax_scaled, xmin_scaled:xmax_scaled] = 1.0
-        attention_mask[attention_mask == 0] = 0.3
+        # 图像下半部分设置为1.0
+        img_half_height = 128 // 2
+        attention_mask[img_half_height:, :] = 1.0
+        
+        # 边界框区域设置为1.5
+        xmin_scaled = max(0, min(127, round(xmin * 128 / orig_w)))
+        xmax_scaled = max(0, min(127, round(xmax * 128 / orig_w)))
+        ymin_scaled = max(0, min(127, round(ymin * 128 / orig_h)))
+        ymax_scaled = max(0, min(127, round(ymax * 128 / orig_h)))
+        attention_mask[ymin_scaled:ymax_scaled, xmin_scaled:xmax_scaled] = 1.5
 
         if self.transform:
             image = self.transform(image)
         
+        # h = image.shape[1]
+        # top_third = h // 3
+        # image[:, :top_third, :] = -1
+
         return image, label, attention_mask
 
 def train_mnist():
 
     # hardcoding these here
-    n_epoch = 300
-    batch_size = 1
-    n_T = 500
+    n_epoch = 500
+    batch_size = 4
+    n_T = 800
     device = "cuda:0"
-    n_feat = 192 # 128 ok, 256 better (but slower)
-    lrate = 2e-4
+    n_feat = 128 # 128 ok, 256 better (but slower)
+    lrate = 1e-4
     save_model = True
-    save_dir = './output/outputs_Czech/'
-    ws_test = [0.0, 8.0]
+    save_dir = './output/outputs_mask/'
+    ws_test = [2.0, 4.0]
 
     tf = transforms.Compose([
-        transforms.Resize((256, 256)),
+        transforms.Resize((128, 128)),
         transforms.ToTensor(),
         transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
     ])
-    dataset = CustomDataset("./cropped_images_Czech/", transform=tf)
+    dataset = CustomDataset("./cropped_images_Japan/", transform=tf)
     n_classes = len(dataset.classes)
     dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True, num_workers=5)
 
@@ -461,16 +503,23 @@ def train_mnist():
             x = x.to(device)
             c = c.long().to(device)
             attention_mask = attention_mask.to(device)
-           
-            loss = ddpm(x, c, attention_mask)
-            loss.backward()
+            with torch.cuda.amp.autocast():
+                loss = ddpm(x, c, attention_mask)
+            
+            ddpm.scaler.scale(loss).backward()
+            # 添加梯度裁剪
+            ddpm.scaler.unscale_(optim)
+            torch.nn.utils.clip_grad_norm_(ddpm.parameters(), 1.0)
+            
+            ddpm.scaler.step(optim)
+            ddpm.scaler.update()
+
             if loss_ema is None:
                 loss_ema = loss.item()
             else:
                 loss_ema = 0.95 * loss_ema + 0.05 * loss.item()
             pbar.set_description(f"loss: {loss_ema:.4f}")
-            optim.step()
-        
+
         # for eval, save an image of currently generated samples (top rows)
         # followed by real images (bottom rows)
         ddpm.eval()
@@ -478,7 +527,7 @@ def train_mnist():
             n_sample = 4*n_classes
             for w_i, w in enumerate(ws_test):
                 if ep%5==0 or ep == int(n_epoch-1):
-                    x_gen, x_gen_store = ddpm.sample(n_sample, (3, 256, 256), device, guide_w=w)
+                    x_gen, x_gen_store = ddpm.sample(n_sample, (3, 128, 128), device, guide_w=w)
 
                     # append some real images at bottom, order by class also
                     # append some real images at bottom, order by class also
@@ -497,22 +546,22 @@ def train_mnist():
                     print('saved image at ' + save_dir + f"image_ep{ep}_w{w}.png")
 
                     
-                    fig, axs = plt.subplots(nrows=int(n_sample/n_classes), ncols=n_classes,sharex=True,sharey=True,figsize=(16,6))
-                    def animate_diff(i, x_gen_store):
-                        print(f'gif animating frame {i} of {x_gen_store.shape[0]}', end='\r')
-                        plots = []
-                        for row in range(int(n_sample/n_classes)):
-                            for col in range(n_classes):
-                                axs[row, col].clear()
-                                axs[row, col].set_xticks([])
-                                axs[row, col].set_yticks([])
-                                img = x_gen_store[i,(row*n_classes)+col].transpose(1,2,0)
-                                img = img * 0.5 + 0.5
-                                plots.append(axs[row, col].imshow(img))
-                        return plots
-                    ani = FuncAnimation(fig, animate_diff, fargs=[x_gen_store],  interval=200, blit=False, repeat=True, frames=x_gen_store.shape[0])    
-                    ani.save(save_dir + f"gif_ep{ep}_w{w}.gif", dpi=100, writer=PillowWriter(fps=5))
-                    print('saved image at ' + save_dir + f"gif_ep{ep}_w{w}.gif")
+                    # fig, axs = plt.subplots(nrows=int(n_sample/n_classes), ncols=n_classes,sharex=True,sharey=True,figsize=(16,6))
+                    # def animate_diff(i, x_gen_store):
+                    #     print(f'gif animating frame {i} of {x_gen_store.shape[0]}', end='\r')
+                    #     plots = []
+                    #     for row in range(int(n_sample/n_classes)):
+                    #         for col in range(n_classes):
+                    #             axs[row, col].clear()
+                    #             axs[row, col].set_xticks([])
+                    #             axs[row, col].set_yticks([])
+                    #             img = x_gen_store[i,(row*n_classes)+col].transpose(1,2,0)
+                    #             img = img * 0.5 + 0.5
+                    #             plots.append(axs[row, col].imshow(img))
+                    #     return plots
+                    # ani = FuncAnimation(fig, animate_diff, fargs=[x_gen_store],  interval=200, blit=False, repeat=True, frames=x_gen_store.shape[0])    
+                    # ani.save(save_dir + f"gif_ep{ep}_w{w}.gif", dpi=100, writer=PillowWriter(fps=5))
+                    # print('saved image at ' + save_dir + f"gif_ep{ep}_w{w}.gif")
         # optionally save model
         if save_model and ep == int(n_epoch-1):
             torch.save(ddpm.state_dict(), save_dir + f"model_{ep}.pth")

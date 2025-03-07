@@ -100,6 +100,41 @@ class EmbedFC(nn.Module):
         x = x.view(-1, self.input_dim)
         return self.model(x)
 
+class RegionAttention(nn.Module):
+    def __init__(self, in_channels):
+        super(RegionAttention, self).__init__()
+        self.conv_mask = nn.Conv2d(1, 1, kernel_size=1)  # 处理掩码
+        self.softmax = nn.Softmax(dim=2)
+        
+        self.channel_attention = nn.Sequential(
+            nn.Conv2d(in_channels, in_channels // 8, 1),
+            nn.ReLU(),
+            nn.Conv2d(in_channels // 8, in_channels, 1),
+            nn.Sigmoid()
+        )
+    
+    def forward(self, x, mask):
+        """
+        Args:
+            x: 特征图 [B, C, H, W]
+            mask: 标注区域掩码 [B, 1, H, W]
+        """
+        B, C, H, W = x.shape
+        
+        # 处理掩码
+        mask_feat = self.conv_mask(mask)  # [B, 1, H, W]
+        
+        # 空间注意力
+        spatial_attn = mask_feat * x  # 使用掩码直接引导空间注意力
+        
+        # 通道注意力
+        channel_attn = self.channel_attention(x)
+        
+        # 组合注意力
+        out = x * spatial_attn * channel_attn
+        
+        return out
+
 
 class ContextUnet(nn.Module):
     def __init__(self, in_channels, n_feat = 256, n_classes=10):
@@ -137,13 +172,24 @@ class ContextUnet(nn.Module):
             nn.Conv2d(n_feat, self.in_channels, 3, 1, 1),
         )
 
-    def forward(self, x, c, t, context_mask):
+        # 添加区域注意力模块
+        self.region_attn1 = RegionAttention(n_feat)
+        self.region_attn2 = RegionAttention(n_feat * 2)
+        
+    def forward(self, x, c, t, context_mask, region_mask):
         # x is (noisy) image, c is context label, t is timestep, 
         # context_mask says which samples to block the context on
 
         x = self.init_conv(x)
+        
+        # 在特征提取过程中应用区域注意力
+        region_mask1 = F.interpolate(region_mask, size=x.shape[2:])
+        x = self.region_attn1(x, region_mask1)
         down1 = self.down1(x)
+        
         down2 = self.down2(down1)
+        region_mask2 = F.interpolate(region_mask, size=down2.shape[2:])
+        down2 = self.region_attn2(down2, region_mask2)
         hiddenvec = self.to_vec(down2)
 
         # convert context to one hot embedding
@@ -169,8 +215,14 @@ class ContextUnet(nn.Module):
 
         up1 = self.up0(hiddenvec)
         up1 = F.interpolate(up1, size=down2.shape[2:])
+        region_mask_up1 = F.interpolate(region_mask, size=up1.shape[2:])  # 为up1创建新的掩码
+        up1 = self.region_attn2(up1, region_mask_up1)
+        
         up2 = self.up1(cemb1*up1 + temb1, down2)
         up2 = F.interpolate(up2, size=down1.shape[2:])
+        region_mask_up2 = F.interpolate(region_mask, size=up2.shape[2:])  # 为up2创建新的掩码
+        up2 = self.region_attn1(up2, region_mask_up2)
+        
         up3 = self.up2(cemb2*up2 + temb2, down1)
         up3 = F.interpolate(up3, size=x.shape[2:])
         out = self.out(torch.cat((up3, x), 1))
@@ -222,7 +274,7 @@ class DDPM(nn.Module):
         self.drop_prob = drop_prob
         self.loss_mse = nn.MSELoss()
 
-    def forward(self, x, c):
+    def forward(self, x, c, region_mask):
         """
         this method is used in training, so samples t and noise randomly
         """
@@ -239,8 +291,12 @@ class DDPM(nn.Module):
         # dropout context with some probability
         context_mask = torch.bernoulli(torch.zeros_like(c)+self.drop_prob).to(self.device)
         
-        # return MSE between added noise, and our predicted noise
-        return self.loss_mse(noise, self.nn_model(x_t, c, _ts / self.n_T, context_mask))
+        pred_noise = self.nn_model(x_t, c, _ts / self.n_T, context_mask, region_mask)
+
+        return self.loss_mse(
+            noise * (1 + region_mask),  # 增加目标区域的权重
+            pred_noise * (1 + region_mask)
+        )
 
     def sample(self, n_sample, size, device, guide_w = 0.0):
         """
@@ -254,7 +310,19 @@ class DDPM(nn.Module):
         
         # 创建上下文掩码
         context_mask = torch.zeros_like(c_i).to(device)
+        # 创建中心区域掩码，假设我们想关注图像中心区域
+        region_mask = torch.zeros((n_sample, 1, size[1], size[2])).to(device)
         
+        # 定义中心区域（例如，中心的 60% 区域）
+        center_h = size[1] // 2
+        center_w = size[2] // 2
+        radius_h = int(size[1] * 0.3)  # 30% of height
+        radius_w = int(size[2] * 0.3)  # 30% of width
+        
+        # 设置中心区域的掩码值为1
+        region_mask[:, :, 
+                    center_h-radius_h:center_h+radius_h,
+                    center_w-radius_w:center_w+radius_w] = 1.0
         # 双倍批次大小
         x_i_store = []
         print()
@@ -268,10 +336,11 @@ class DDPM(nn.Module):
             t_is_double = t_is.repeat(2,1)
             c_i_double = c_i.repeat(2)
             context_mask_double = context_mask.repeat(2)
+            region_mask_double = region_mask.repeat(2,1,1,1)
             context_mask_double[n_sample:] = 1.
             
             # 预测噪声
-            eps = self.nn_model(x_i_double, c_i_double, t_is_double, context_mask_double)
+            eps = self.nn_model(x_i_double, c_i_double, t_is_double, context_mask_double, region_mask_double)
             
             # 分离预测结果
             eps1 = eps[:n_sample]
@@ -392,15 +461,53 @@ class DroneDataset(Dataset):
         
         # 读取图像
         image = Image.open(sample['img_path']).convert('RGB')
+        xmin, ymin, xmax, ymax = sample['bbox']
         
-        # 裁剪并调整大小
+        # 首先计算裁剪区域（与_crop_and_resize中的逻辑相同）
+        width = xmax - xmin
+        height = ymax - ymin
+        size = max(width, height) * 1.5  # 扩充系数与_crop_and_resize保持一致
+        
+        # 计算裁剪区域的中心点
+        center_x = (xmin + xmax) / 2
+        center_y = (ymin + ymax) / 2
+        
+        # 计算裁剪区域的边界
+        crop_xmin = max(0, center_x - size/2)
+        crop_ymin = max(0, center_y - size/2)
+        crop_xmax = min(image.size[0], center_x + size/2)
+        crop_ymax = min(image.size[1], center_y + size/2)
+        
+        # 计算目标框相对于裁剪区域的坐标
+        rel_xmin = xmin - crop_xmin
+        rel_ymin = ymin - crop_ymin
+        rel_xmax = xmax - crop_xmin
+        rel_ymax = ymax - crop_ymin
+        
+        # 计算缩放后的坐标
+        scale = self.target_size / (crop_ymax - crop_ymin)  # 或 (crop_xmax - crop_xmin)
+        new_xmin = int(rel_xmin * scale)
+        new_ymin = int(rel_ymin * scale)
+        new_xmax = int(rel_xmax * scale)
+        new_ymax = int(rel_ymax * scale)
+        
+        # 创建掩码
+        mask = torch.zeros((self.target_size, self.target_size))
+        # 确保坐标在有效范围内
+        new_xmin = max(0, min(new_xmin, self.target_size-1))
+        new_ymin = max(0, min(new_ymin, self.target_size-1))
+        new_xmax = max(0, min(new_xmax, self.target_size-1))
+        new_ymax = max(0, min(new_ymax, self.target_size-1))
+        mask[new_ymin:new_ymax, new_xmin:new_xmax] = 1.0
+        
+        # 裁剪并调整图像大小
         image = self._crop_and_resize(image, sample['bbox'])
         
         # 应用变换
         if self.transform:
             image = self.transform(image)
         
-        return image, sample['class']
+        return image, sample['class'], mask.unsqueeze(0)
 def train_drone():
     # 修改参数
     n_epoch = 200
@@ -452,7 +559,7 @@ def train_drone():
         num_workers=4
     )
 
-    # 其余训练逻辑保持不变
+    
     optim = torch.optim.Adam(ddpm.parameters(), lr=lrate)
 
     for ep in range(n_epoch):
@@ -464,11 +571,13 @@ def train_drone():
 
         pbar = tqdm(dataloader)
         loss_ema = None
-        for x, c in pbar:
-            optim.zero_grad()
+        for x, c, region_mask in pbar:
             x = x.to(device)
             c = c.to(device)
-            loss = ddpm(x, c)
+            region_mask = region_mask.to(device)
+            
+            optim.zero_grad()
+            loss = ddpm(x, c, region_mask)
             loss.backward()
             if loss_ema is None:
                 loss_ema = loss.item()
@@ -481,7 +590,7 @@ def train_drone():
         # followed by real images (bottom rows)
         ddpm.eval()
         with torch.no_grad():
-            n_sample = 4*dataset.num_classes
+            n_sample = 2*dataset.num_classes
             for w_i, w in enumerate(ws_test):
                 x_gen, x_gen_store = ddpm.sample(n_sample, (3, image_size, image_size), device, guide_w=w)
 
