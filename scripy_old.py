@@ -14,47 +14,112 @@ import os
 from PIL import Image
 import xml.etree.ElementTree as ET
 
-class ChannelAttentionModule(nn.Module):
-    def __init__(self, channel, ratio=16):
-        super(ChannelAttentionModule, self).__init__()
+# 优化的 CoordAttention - 修复 BatchNorm 共享和注意力权重问题
+class CoordAttention(nn.Module):
+    def __init__(self, channel, reduction=16):
+        super(CoordAttention, self).__init__()
+        self.pool_h = nn.AdaptiveAvgPool2d((None, 1))  # (h,1)
+        self.pool_w = nn.AdaptiveAvgPool2d((1, None))  # (1,w)
+        
+        # 为水平和垂直方向使用独立的卷积层和BatchNorm
+        self.conv1_h = nn.Conv2d(channel, channel // reduction, kernel_size=1)
+        self.conv1_w = nn.Conv2d(channel, channel // reduction, kernel_size=1)
+        
+        # 分离的 BatchNorm
+        self.bn1_h = nn.BatchNorm2d(channel // reduction)
+        self.bn1_w = nn.BatchNorm2d(channel // reduction)
+        
+        self.act = nn.GELU()
+        
+        # 方向交互卷积（使用1x1卷积避免维度混乱）
+        self.h2w_proj = nn.Conv2d(channel // reduction, channel // reduction, kernel_size=1)
+        self.w2h_proj = nn.Conv2d(channel // reduction, channel // reduction, kernel_size=1)
+        
+        # 可学习的交互强度参数
+        self.gamma_h = nn.Parameter(torch.zeros(1))
+        self.gamma_w = nn.Parameter(torch.zeros(1))
+        
+        self.conv_h = nn.Conv2d(channel // reduction, channel, kernel_size=1)
+        self.conv_w = nn.Conv2d(channel // reduction, channel, kernel_size=1)
+        self.sigmoid = nn.Sigmoid()
+        
+        # 初始化为0，通过Sigmoid转为0.5
+        self.alpha = nn.Parameter(torch.zeros(1))
+        self.beta = nn.Parameter(torch.zeros(1))
+        
+    def forward(self, x):
+        identity = x
+        
+        n, c, h, w = x.size()
+        
+        # 水平方向池化 (h,1)
+        x_h = self.pool_h(x)  # [n,c,h,1]
+        # 垂直方向池化 (1,w)
+        x_w = self.pool_w(x)  # [n,c,1,w]
+        
+        # 分别处理各方向，使用独立的BN
+        x_h = self.conv1_h(x_h)  # [n,c/r,h,1]
+        x_h = self.bn1_h(x_h)
+        x_h = self.act(x_h)
+        
+        x_w = self.conv1_w(x_w)  # [n,c/r,1,w]
+        x_w = self.bn1_w(x_w)
+        x_w = self.act(x_w)
+        
+        # 方向交互 - 避免直接插值
+        h2w = self.h2w_proj(x_h)  # [n,c/r,h,1]
+        w2h = self.w2h_proj(x_w)  # [n,c/r,1,w]
+        
+        # 转置操作处理维度交换，避免显式插值
+        h2w_reshaped = h2w.permute(0, 1, 3, 2)  # [n,c/r,1,h]
+        w2h_reshaped = w2h.permute(0, 1, 3, 2)  # [n,c/r,w,1]
+        
+        # 使用自适应池化将不匹配维度对齐
+        h2w_adapted = F.adaptive_avg_pool2d(h2w_reshaped, (1, w))  # [n,c/r,1,w]
+        w2h_adapted = F.adaptive_avg_pool2d(w2h_reshaped, (h, 1))  # [n,c/r,h,1]
+        
+        # 使用可学习参数控制交互强度
+        gamma_h = torch.sigmoid(self.gamma_h)
+        gamma_w = torch.sigmoid(self.gamma_w)
+        
+        # 融合交互信息
+        x_h = x_h + gamma_h * w2h_adapted
+        x_w = x_w + gamma_w * h2w_adapted
+        
+        # 生成注意力权重
+        a_h = self.sigmoid(self.conv_h(x_h))  # [n,c,h,1]
+        a_w = self.sigmoid(self.conv_w(x_w))  # [n,c,1,w]
+        
+        # 使用有界的可学习权重组合注意力图
+        alpha = torch.sigmoid(self.alpha)
+        beta = torch.sigmoid(self.beta)
+        
+        # 正规化组合权重，确保和为1
+        weight_sum = alpha + beta + 1e-8  # 避免除零
+        alpha = alpha / weight_sum
+        beta = beta / weight_sum
+        
+        attention = alpha * a_h + beta * a_w
+        
+        return identity * attention
+
+# 优化的SE注意力模块
+class SEBlock(nn.Module):
+    def __init__(self, channels, reduction=16):
+        super(SEBlock, self).__init__()
         self.avg_pool = nn.AdaptiveAvgPool2d(1)
-        self.max_pool = nn.AdaptiveMaxPool2d(1)
-
-        self.shared_MLP = nn.Sequential(
-            nn.Conv2d(channel, channel // ratio, 1, bias=False),
-            nn.ReLU(),
-            nn.Conv2d(channel // ratio, channel, 1, bias=False)
+        self.fc = nn.Sequential(
+            nn.Linear(channels, channels // reduction, bias=False),
+            nn.GELU(),
+            nn.Linear(channels // reduction, channels, bias=False),
+            nn.Sigmoid()
         )
-        self.sigmoid = nn.Sigmoid()
 
     def forward(self, x):
-        avgout = self.shared_MLP(self.avg_pool(x))
-        maxout = self.shared_MLP(self.max_pool(x))
-        return self.sigmoid(avgout + maxout)
-
-class SpatialAttentionModule(nn.Module):
-    def __init__(self):
-        super(SpatialAttentionModule, self).__init__()
-        self.conv2d = nn.Conv2d(in_channels=2, out_channels=1, kernel_size=7, stride=1, padding=3)
-        self.sigmoid = nn.Sigmoid()
-
-    def forward(self, x):
-        avgout = torch.mean(x, dim=1, keepdim=True)
-        maxout, _ = torch.max(x, dim=1, keepdim=True)
-        out = torch.cat([avgout, maxout], dim=1)
-        out = self.sigmoid(self.conv2d(out))
-        return out
-
-class CBAM(nn.Module):
-    def __init__(self, channel):
-        super(CBAM, self).__init__()
-        self.channel_attention = ChannelAttentionModule(channel)
-        self.spatial_attention = SpatialAttentionModule()
-
-    def forward(self, x):
-        out = self.channel_attention(x) * x
-        out = self.spatial_attention(out) * out
-        return out
+        b, c, _, _ = x.size()
+        y = self.avg_pool(x).squeeze(-1).squeeze(-1)  # 正确展平
+        y = self.fc(y).view(b, c, 1, 1)
+        return x * y
 
 class ResidualConvBlock(nn.Module):
     def __init__(
@@ -62,7 +127,7 @@ class ResidualConvBlock(nn.Module):
     ) -> None:
         super().__init__()
         '''
-        standard ResNet style convolutional block
+        standard ResNet style convolutional block with SE attention
         '''
         self.same_channels = in_channels==out_channels
         self.is_res = is_res
@@ -76,12 +141,16 @@ class ResidualConvBlock(nn.Module):
             nn.BatchNorm2d(out_channels),
             nn.GELU(),
         )
+        self.se = SEBlock(out_channels) if is_res else None
         
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         if self.is_res:
             x1 = self.conv1(x)
             x2 = self.conv2(x1)
+            # 应用SE注意力增强特征
+            if self.se:
+                x2 = self.se(x2)
             # this adds on correct residual in case channels have increased
             if self.same_channels:
                 out = x + x2
@@ -91,21 +160,40 @@ class ResidualConvBlock(nn.Module):
         else:
             x1 = self.conv1(x)
             x2 = self.conv2(x1)
-            
             return x2
 
 
 class UnetDown(nn.Module):
-    def __init__(self, in_channels, out_channels):
+    def __init__(self, in_channels, out_channels, compress_ratio=4):
         super(UnetDown, self).__init__()
         '''
-        process and downscale the image feature maps
+        process and downscale the image feature maps with channel compression
         '''
-        layers = [ResidualConvBlock(in_channels, out_channels), nn.MaxPool2d(2)]
-        self.model = nn.Sequential(*layers)
+        # 通道压缩以减少参数量和计算量
+        compressed_channels = in_channels // compress_ratio
+        
+        self.channel_compressor = nn.Sequential(
+            nn.Conv2d(in_channels, compressed_channels, 1),
+            nn.BatchNorm2d(compressed_channels),
+            nn.GELU()
+        )
+        
+        # 通道调整确保维度匹配
+        self.channel_adjust = nn.Conv2d(compressed_channels, out_channels, 1)
+        
+        # 使用卷积下采样替代MaxPool，保持更多的空间信息
+        self.down = nn.Sequential(
+            nn.Conv2d(out_channels, out_channels, 3, padding=1),
+            nn.BatchNorm2d(out_channels),
+            nn.GELU(),
+            ResidualConvBlock(out_channels, out_channels, is_res=True),
+            nn.Conv2d(out_channels, out_channels, 4, stride=2, padding=1)
+        )
 
     def forward(self, x):
-        return self.model(x)
+        x = self.channel_compressor(x)
+        x = self.channel_adjust(x)
+        return self.down(x)
 
 
 class UnetUp(nn.Module):
@@ -115,7 +203,11 @@ class UnetUp(nn.Module):
         process and upscale the image feature maps
         '''
         layers = [
-            nn.ConvTranspose2d(in_channels, out_channels, 2, 2),
+            # 使用更灵活的上采样方式，处理奇数尺寸
+            nn.Sequential(
+                nn.Upsample(scale_factor=2, mode='bilinear', align_corners=True),
+                nn.Conv2d(in_channels, out_channels, 3, padding=1)
+            ),
             ResidualConvBlock(out_channels, out_channels),
             ResidualConvBlock(out_channels, out_channels),
         ]
@@ -146,9 +238,8 @@ class EmbedFC(nn.Module):
         return self.model(x)
 
 
-
 class ContextUnet(nn.Module):
-    def __init__(self, in_channels=3, n_feat = 256, n_classes=10):
+    def __init__(self, in_channels=3, n_feat = 192, n_classes=10):  # 增加n_feat默认值
         super(ContextUnet, self).__init__()
 
         self.in_channels = in_channels
@@ -162,10 +253,11 @@ class ContextUnet(nn.Module):
         self.down3 = UnetDown(2 * n_feat, 4 * n_feat)
         self.down4 = UnetDown(4 * n_feat, 8 * n_feat)
 
-        self.cbam1 = CBAM(n_feat)
-        self.cbam2 = CBAM(2 * n_feat)
-        self.cbam3 = CBAM(4 * n_feat)
-        self.cbam4 = CBAM(8 * n_feat)
+        # 使用CoordAttention替代CBAM
+        self.ca1 = CoordAttention(n_feat)
+        self.ca2 = CoordAttention(2 * n_feat)
+        self.ca3 = CoordAttention(4 * n_feat)
+        self.ca4 = CoordAttention(8 * n_feat)
 
         self.to_vec = nn.Sequential(nn.AvgPool2d(8), nn.GELU())
 
@@ -191,20 +283,21 @@ class ContextUnet(nn.Module):
             nn.Conv2d(n_feat, self.in_channels, 3, 1, 1),
         )
 
+
     def forward(self, x, c, t, context_mask):
         x = self.init_conv(x)
         
         down1 = self.down1(x)
-        down1 = self.cbam1(down1)
+        down1 = self.ca1(down1)
         
         down2 = self.down2(down1)
-        down2 = self.cbam2(down2)
+        down2 = self.ca2(down2)
         
         down3 = self.down3(down2)
-        down3 = self.cbam3(down3)
+        down3 = self.ca3(down3)
         
         down4 = self.down4(down3)
-        down4 = self.cbam4(down4)
+        down4 = self.ca4(down4)
         
         hiddenvec = self.to_vec(down4)
 
@@ -264,6 +357,7 @@ class DDPM(nn.Module):
     def __init__(self, nn_model, betas, n_T, device, drop_prob=0.1):
         super(DDPM, self).__init__()
         self.nn_model = nn_model.to(device)
+        self.scaler = torch.cuda.amp.GradScaler()
 
         # register_buffer allows accessing dictionary produced by ddpm_schedules
         # e.g. can access self.sqrtab later
@@ -290,6 +384,7 @@ class DDPM(nn.Module):
 
         # dropout context with some probability
         context_mask = torch.bernoulli(torch.ones_like(c,dtype=torch.float) * (1 - self.drop_prob)).to(self.device)
+        
         # 预测噪声
         predicted_noise = self.nn_model(x_t, c, _ts / self.n_T, context_mask)
         
@@ -298,15 +393,27 @@ class DDPM(nn.Module):
         attention_mask = attention_mask.unsqueeze(1).repeat(1, 3, 1, 1)  # 扩展到3通道
         
         # 计算加权MSE损失
-        weighted_mask = torch.where(attention_mask > 0.5, 
-                              torch.tensor(1.5).to(self.device),  
-                              torch.tensor(0.5).to(self.device))
+        weighted_mask = torch.where(attention_mask > 1.2, 
+                      torch.tensor(3.0).to(self.device),  # 从1.7提高到3.0
+                      torch.where(attention_mask > 0.8, 
+                          torch.tensor(1.0).to(self.device), 
+                          torch.tensor(0.5).to(self.device)))  # 背景从0.3提高到0.5
+        
         
         loss = (noise - predicted_noise)**2
         weighted_loss = loss * weighted_mask
         
-        
-        return weighted_loss.mean()
+        high_attention_regions = (attention_mask > 1.2).float().unsqueeze(1)
+        feature_consistency_loss = torch.mean(
+            torch.abs(
+                predicted_noise * high_attention_regions - 
+                noise * high_attention_regions
+            )
+        ) * 2.0  # 额外权重
+
+        total_loss = weighted_loss.mean() + feature_consistency_loss
+
+        return total_loss
 
     def sample(self, n_sample, size, device, guide_w = 0.0,refine_steps=2):
         # we follow the guidance sampling scheme described in 'Classifier-Free Diffusion Guidance'
@@ -316,6 +423,7 @@ class DDPM(nn.Module):
         # where w>0 means more guidance
 
         x_i = torch.randn(n_sample, *size).to(device)  # x_T ~ N(0, 1), sample initial noise
+        
         c_i = torch.arange(0,self.n_classes).to(device) # context for us just cycles throught the mnist labels
         c_i = c_i.repeat(int(n_sample/c_i.shape[0]))
 
@@ -346,11 +454,10 @@ class DDPM(nn.Module):
             eps2 = eps[n_sample:]
             eps = (1+guide_w)*eps1 - guide_w*eps2
             x_i = x_i[:n_sample]
-            for _ in range(refine_steps):
-                x_i = (
-                    self.oneover_sqrta[i] * (x_i - eps * self.mab_over_sqrtmab[i])
-                    + self.sqrt_beta_t[i] * z
-                )
+            x_i = (
+                self.oneover_sqrta[i] * (x_i - eps * self.mab_over_sqrtmab[i])
+                + self.sqrt_beta_t[i] * z
+            )
             if i%20==0 or i==self.n_T or i<8:
                 x_i_store.append(x_i.detach().cpu().numpy())
         
@@ -404,34 +511,41 @@ class CustomDataset(torch.utils.data.Dataset):
         orig_w = int(root.find('.//width').text)
         orig_h = int(root.find('.//height').text)
         
-        # 创建attention mask
-        attention_mask = torch.zeros((256, 256))
+        # 创建attention mask - 初始设置所有区域为0.5
+        attention_mask = torch.ones((256, 256)) * 0.5
+        
+        # 图像下半部分设置为1.0
+        img_half_height = 256 // 2
+        attention_mask[img_half_height:, :] = 1.0
+        
+        # 边界框区域设置为1.5
         xmin_scaled = max(0, min(255, round(xmin * 256 / orig_w)))
         xmax_scaled = max(0, min(255, round(xmax * 256 / orig_w)))
         ymin_scaled = max(0, min(255, round(ymin * 256 / orig_h)))
         ymax_scaled = max(0, min(255, round(ymax * 256 / orig_h)))
-        
-        # 边界框区域设置为1.0，其他区域设置为0.3
-        attention_mask[ymin_scaled:ymax_scaled, xmin_scaled:xmax_scaled] = 1.0
-        attention_mask[attention_mask == 0] = 0.3
+        attention_mask[ymin_scaled:ymax_scaled, xmin_scaled:xmax_scaled] = 1.5
 
         if self.transform:
             image = self.transform(image)
         
+        # h = image.shape[1]
+        # top_third = h // 3
+        # image[:, :top_third, :] = -1
+
         return image, label, attention_mask
 
 def train_mnist():
 
     # hardcoding these here
-    n_epoch = 300
+    n_epoch = 400
     batch_size = 1
-    n_T = 500
+    n_T = 700
     device = "cuda:0"
-    n_feat = 192 # 128 ok, 256 better (but slower)
-    lrate = 2e-4
+    n_feat = 192  # 从128增加到192，平衡表达能力和计算复杂度
+    lrate = 1e-4
     save_model = True
-    save_dir = './output/outputs_Czech/'
-    ws_test = [0.0, 8.0]
+    save_dir = './output/outputs_Czech/'  # 更新保存路径
+    ws_test = [2.0, 4.0]
 
     tf = transforms.Compose([
         transforms.Resize((256, 256)),
@@ -445,14 +559,19 @@ def train_mnist():
     ddpm = DDPM(nn_model=ContextUnet(in_channels=3, n_feat=n_feat, n_classes=n_classes), betas=(1e-4, 0.02), n_T=n_T, device=device, drop_prob=0.1)
     ddpm.to(device)
 
-
-    optim = torch.optim.Adam(ddpm.parameters(), lr=lrate)
+    # 使用AdamW优化器并添加权重衰减
+    optim = torch.optim.AdamW(ddpm.parameters(), lr=lrate, weight_decay=1e-5)
+    
+    # 添加余弦退火学习率调度器
+    scheduler = torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(
+        optim, T_0=10, T_mult=2, eta_min=3e-5)
+        
     for ep in range(n_epoch):
         print(f'epoch {ep}')
         ddpm.train()
 
-        # linear lrate decay
-        optim.param_groups[0]['lr'] = lrate*(1-ep/n_epoch)
+        # 使用调度器替代线性衰减
+        # optim.param_groups[0]['lr'] = lrate*(1-ep/n_epoch)
 
         pbar = tqdm(dataloader)
         loss_ema = None
@@ -461,16 +580,32 @@ def train_mnist():
             x = x.to(device)
             c = c.long().to(device)
             attention_mask = attention_mask.to(device)
-           
-            loss = ddpm(x, c, attention_mask)
-            loss.backward()
+            
+            # 使用混合精度训练
+            with torch.cuda.amp.autocast():
+                loss = ddpm(x, c, attention_mask)
+            
+            ddpm.scaler.scale(loss).backward()
+            # 添加梯度裁剪
+            ddpm.scaler.unscale_(optim)
+            torch.nn.utils.clip_grad_norm_(ddpm.parameters(), 1.0)
+            
+            ddpm.scaler.step(optim)
+            ddpm.scaler.update()
+
             if loss_ema is None:
                 loss_ema = loss.item()
             else:
                 loss_ema = 0.95 * loss_ema + 0.05 * loss.item()
             pbar.set_description(f"loss: {loss_ema:.4f}")
-            optim.step()
+            
+        # 在每个epoch结束更新学习率
+        scheduler.step()
         
+        # 记录当前学习率
+        current_lr = scheduler.get_last_lr()[0]
+        print(f"Current learning rate: {current_lr:.6f}")
+
         # for eval, save an image of currently generated samples (top rows)
         # followed by real images (bottom rows)
         ddpm.eval()
@@ -497,22 +632,22 @@ def train_mnist():
                     print('saved image at ' + save_dir + f"image_ep{ep}_w{w}.png")
 
                     
-                    fig, axs = plt.subplots(nrows=int(n_sample/n_classes), ncols=n_classes,sharex=True,sharey=True,figsize=(16,6))
-                    def animate_diff(i, x_gen_store):
-                        print(f'gif animating frame {i} of {x_gen_store.shape[0]}', end='\r')
-                        plots = []
-                        for row in range(int(n_sample/n_classes)):
-                            for col in range(n_classes):
-                                axs[row, col].clear()
-                                axs[row, col].set_xticks([])
-                                axs[row, col].set_yticks([])
-                                img = x_gen_store[i,(row*n_classes)+col].transpose(1,2,0)
-                                img = img * 0.5 + 0.5
-                                plots.append(axs[row, col].imshow(img))
-                        return plots
-                    ani = FuncAnimation(fig, animate_diff, fargs=[x_gen_store],  interval=200, blit=False, repeat=True, frames=x_gen_store.shape[0])    
-                    ani.save(save_dir + f"gif_ep{ep}_w{w}.gif", dpi=100, writer=PillowWriter(fps=5))
-                    print('saved image at ' + save_dir + f"gif_ep{ep}_w{w}.gif")
+                    # fig, axs = plt.subplots(nrows=int(n_sample/n_classes), ncols=n_classes,sharex=True,sharey=True,figsize=(16,6))
+                    # def animate_diff(i, x_gen_store):
+                    #     print(f'gif animating frame {i} of {x_gen_store.shape[0]}', end='\r')
+                    #     plots = []
+                    #     for row in range(int(n_sample/n_classes)):
+                    #         for col in range(n_classes):
+                    #             axs[row, col].clear()
+                    #             axs[row, col].set_xticks([])
+                    #             axs[row, col].set_yticks([])
+                    #             img = x_gen_store[i,(row*n_classes)+col].transpose(1,2,0)
+                    #             img = img * 0.5 + 0.5
+                    #             plots.append(axs[row, col].imshow(img))
+                    #     return plots
+                    # ani = FuncAnimation(fig, animate_diff, fargs=[x_gen_store],  interval=200, blit=False, repeat=True, frames=x_gen_store.shape[0])    
+                    # ani.save(save_dir + f"gif_ep{ep}_w{w}.gif", dpi=100, writer=PillowWriter(fps=5))
+                    # print('saved image at ' + save_dir + f"gif_ep{ep}_w{w}.gif")
         # optionally save model
         if save_model and ep == int(n_epoch-1):
             torch.save(ddpm.state_dict(), save_dir + f"model_{ep}.pth")
