@@ -103,8 +103,9 @@ class UnetDown(nn.Module):
         '''
         layers = [
             ResidualConvBlock(in_channels, out_channels),
-            ResidualConvBlock(out_channels, out_channels),  # 增加一个残差块
-            nn.MaxPool2d(2)
+            nn.Conv2d(out_channels, out_channels, kernel_size=4, stride=2, padding=1),
+            nn.GroupNorm(8, out_channels),
+            nn.GELU()
         ]
         self.model = nn.Sequential(*layers)
 
@@ -122,7 +123,6 @@ class UnetUp(nn.Module):
             nn.ConvTranspose2d(in_channels, out_channels, 2, 2),
             ResidualConvBlock(out_channels, out_channels),
             ResidualConvBlock(out_channels, out_channels),  # 增加一个残差块
-            ResidualConvBlock(out_channels, out_channels),  # 再增加一个
         ]
         self.model = nn.Sequential(*layers)
 
@@ -363,7 +363,6 @@ class DDPM(nn.Module):
         context_mask = context_mask.repeat(2)
         context_mask[n_sample:] = 1.
 
-        x_i_store = []
         print()
         for i in range(self.n_T, 0, -1):
             print(f'sampling timestep {i}',end='\r')
@@ -386,11 +385,8 @@ class DDPM(nn.Module):
                 self.oneover_sqrta[i] * (x_i - eps * self.mab_over_sqrtmab[i])
                 + self.sqrt_beta_t[i] * z
             )
-            if i%20==0 or i==self.n_T or i<8:
-                x_i_store.append(x_i.detach().cpu().numpy())
-        
-        x_i_store = np.array(x_i_store)
-        return x_i, x_i_store
+
+        return x_i
 
 class CustomDataset(torch.utils.data.Dataset):
     def __init__(self, root_dir, transform=None):
@@ -440,17 +436,17 @@ class CustomDataset(torch.utils.data.Dataset):
         orig_h = int(root.find('.//height').text)
         
         # 创建attention mask - 初始设置所有区域为0.5
-        attention_mask = torch.ones((128, 128)) * 0.5
+        attention_mask = torch.ones((256, 256)) * 0.5
         
         # 图像下半部分设置为1.0
-        img_half_height = 128 // 2
+        img_half_height = 256 // 2
         attention_mask[img_half_height:, :] = 1.0
         
         # 边界框区域设置为1.5
-        xmin_scaled = max(0, min(127, round(xmin * 128 / orig_w)))
-        xmax_scaled = max(0, min(127, round(xmax * 128 / orig_w)))
-        ymin_scaled = max(0, min(127, round(ymin * 128 / orig_h)))
-        ymax_scaled = max(0, min(127, round(ymax * 128 / orig_h)))
+        xmin_scaled = max(0, min(255, round(xmin * 256 / orig_w)))
+        xmax_scaled = max(0, min(255, round(xmax * 256 / orig_w)))
+        ymin_scaled = max(0, min(255, round(ymin * 256 / orig_h)))
+        ymax_scaled = max(0, min(255, round(ymax * 256 / orig_h)))
         attention_mask[ymin_scaled:ymax_scaled, xmin_scaled:xmax_scaled] = 1.5
 
         if self.transform:
@@ -467,7 +463,7 @@ def train_mnist():
     # hardcoding these here
     n_epoch = 500
     batch_size = 4
-    n_T = 800
+    n_T = 500
     device = "cuda:0"
     n_feat = 128 # 128 ok, 256 better (but slower)
     lrate = 1e-4
@@ -498,7 +494,8 @@ def train_mnist():
 
         pbar = tqdm(dataloader)
         loss_ema = None
-        for x, c, attention_mask in pbar:
+        accum_steps = 4  # 累积4步相当于批量大小16
+        for step, (x, c, attention_mask) in enumerate(pbar):
             optim.zero_grad()
             x = x.to(device)
             c = c.long().to(device)
@@ -506,13 +503,15 @@ def train_mnist():
             with torch.cuda.amp.autocast():
                 loss = ddpm(x, c, attention_mask)
             
+            loss = loss / accum_steps
             ddpm.scaler.scale(loss).backward()
-            # 添加梯度裁剪
-            ddpm.scaler.unscale_(optim)
-            torch.nn.utils.clip_grad_norm_(ddpm.parameters(), 1.0)
-            
-            ddpm.scaler.step(optim)
-            ddpm.scaler.update()
+            if (step + 1) % accum_steps == 0:
+                # 每累积accum_steps步后更新参数
+                ddpm.scaler.unscale_(optim)
+                torch.nn.utils.clip_grad_norm_(ddpm.parameters(), 1.0)
+                ddpm.scaler.step(optim)
+                ddpm.scaler.update()
+                optim.zero_grad()
 
             if loss_ema is None:
                 loss_ema = loss.item()
@@ -527,41 +526,12 @@ def train_mnist():
             n_sample = 4*n_classes
             for w_i, w in enumerate(ws_test):
                 if ep%5==0 or ep == int(n_epoch-1):
-                    x_gen, x_gen_store = ddpm.sample(n_sample, (3, 128, 128), device, guide_w=w)
+                    x_gen = ddpm.sample(n_sample, (3, 128, 128), device, guide_w=w)
 
-                    # append some real images at bottom, order by class also
-                    # append some real images at bottom, order by class also
-                    # x_real = torch.Tensor(x_gen.shape).to(device)
-                    # for k in range(n_classes):
-                    #     for j in range(int(n_sample/n_classes)):
-                    #         try: 
-                    #             idx = torch.squeeze((c == k).nonzero())[j]
-                    #         except:
-                    #             idx = 0
-                    #         x_real[k+(j*n_classes)] = x[idx]
-
-                    # x_all = torch.cat([x_gen, x_real])
                     grid = make_grid(x_gen*0.5 + 0.5, nrow=n_classes)
                     save_image(grid, save_dir + f"image_ep{ep}_w{w}.png")
                     print('saved image at ' + save_dir + f"image_ep{ep}_w{w}.png")
 
-                    
-                    # fig, axs = plt.subplots(nrows=int(n_sample/n_classes), ncols=n_classes,sharex=True,sharey=True,figsize=(16,6))
-                    # def animate_diff(i, x_gen_store):
-                    #     print(f'gif animating frame {i} of {x_gen_store.shape[0]}', end='\r')
-                    #     plots = []
-                    #     for row in range(int(n_sample/n_classes)):
-                    #         for col in range(n_classes):
-                    #             axs[row, col].clear()
-                    #             axs[row, col].set_xticks([])
-                    #             axs[row, col].set_yticks([])
-                    #             img = x_gen_store[i,(row*n_classes)+col].transpose(1,2,0)
-                    #             img = img * 0.5 + 0.5
-                    #             plots.append(axs[row, col].imshow(img))
-                    #     return plots
-                    # ani = FuncAnimation(fig, animate_diff, fargs=[x_gen_store],  interval=200, blit=False, repeat=True, frames=x_gen_store.shape[0])    
-                    # ani.save(save_dir + f"gif_ep{ep}_w{w}.gif", dpi=100, writer=PillowWriter(fps=5))
-                    # print('saved image at ' + save_dir + f"gif_ep{ep}_w{w}.gif")
         # optionally save model
         if save_model and ep == int(n_epoch-1):
             torch.save(ddpm.state_dict(), save_dir + f"model_{ep}.pth")

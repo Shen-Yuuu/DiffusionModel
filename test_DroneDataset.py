@@ -1,100 +1,94 @@
-import unittest
-from PIL import Image, ImageDraw
 import torch
 from torchvision import transforms
-import os
 import matplotlib.pyplot as plt
-from custom_dataset import DroneDataset
-import numpy as np
-
-class TestDroneDataset(unittest.TestCase):
-    def setUp(self):
-        self.img_dir = 'Czech/train/images'
-        self.anno_dir = 'Czech/train/annotations/xmls'
-        self.target_size = 128
-        self.transform = transforms.Compose([
-            transforms.ToTensor(),
-            transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
-        ])
+import matplotlib.patches as patches
+from PIL import Image
+import os
+from custom_dataset import CustomDataset
+def visualize_dataset_samples(dataset, num_samples=5):
+    """
+    可视化数据集中的样本，显示原始图像、边界框和attention mask
+    """
+    fig, axes = plt.subplots(num_samples, 3, figsize=(15, 5*num_samples))
+    
+    for i in range(num_samples):
         
-        self.dataset = DroneDataset(
-            img_dir=self.img_dir,
-            anno_dir=self.anno_dir,
-            target_size=self.target_size,
-            transform=self.transform
+        # 获取一个样本
+        image, label, attention_mask = dataset[i+10]
+        
+        # 获取原始图像路径和XML路径
+        img_path, xml_path, _ = dataset.samples[i+10]
+        
+        # 读取原始图像（不经过transform）
+        orig_image = Image.open(img_path).convert('RGB')
+        
+        # 从XML中获取原始边界框坐标
+        import xml.etree.ElementTree as ET
+        tree = ET.parse(xml_path)
+        root = tree.getroot()
+        bbox = root.find('.//bndbox')
+        xmin = int(bbox.find('xmin').text)
+        ymin = int(bbox.find('ymin').text)
+        xmax = int(bbox.find('xmax').text)
+        ymax = int(bbox.find('ymax').text)
+        
+        # 显示原始图像和边界框
+        axes[i, 0].imshow(orig_image)
+        rect = patches.Rectangle(
+            (xmin, ymin), xmax-xmin, ymax-ymin, 
+            linewidth=2, edgecolor='r', facecolor='none'
         )
+        axes[i, 0].add_patch(rect)
+        axes[i, 0].set_title(f'Original Image (Class: {dataset.classes[label]})')
         
-        # 创建输出目录
-        self.output_dir = 'test_outputs/comparison'
-        os.makedirs(self.output_dir, exist_ok=True)
-
-    def visualize_sample_comparison(self, sample_indices):
-        """可视化对比原始图像和裁剪后的图像"""
-        for idx in sample_indices:
-            # 获取样本数据
-            sample = self.dataset.samples[idx]
-            image_tensor, class_id, mask = self.dataset[idx]
-            
-            # 读取原始图像
-            original_img = Image.open(sample['img_path']).convert('RGB')
-            
-            # 在原始图像上绘制边界框
-            draw = ImageDraw.Draw(original_img)
-            xmin, ymin, xmax, ymax = sample['bbox']
-            draw.rectangle([xmin, ymin, xmax, ymax], outline='red', width=2)
-            
-            # 获取裁剪后的图像
-            cropped_img = self.dataset._crop_and_resize(
-                Image.open(sample['img_path']).convert('RGB'),
-                sample['bbox']
-            )
-            
-            # 创建图像网格
-            fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(15, 5))
-            
-            # 显示原始图像和边界框
-            ax1.imshow(original_img)
-            ax1.set_title('Original Image with Bbox')
-            ax1.axis('off')
-            
-            # 显示裁剪后的图像
-            ax2.imshow(cropped_img)
-            ax2.set_title('Cropped Image')
-            ax2.axis('off')
-            
-            # 显示掩码
-            mask_np = mask.squeeze().numpy()
-            ax3.imshow(mask_np, cmap='gray')
-            ax3.set_title('Region Mask')
-            ax3.axis('off')
-            
-            # 添加总标题
-            class_name = [k for k, v in self.dataset.class_map.items() if v == class_id][0]
-            plt.suptitle(f'Sample {idx}: Class {class_name}', fontsize=14)
-            
-            # 保存图像
-            plt.tight_layout()
-            plt.savefig(os.path.join(self.output_dir, f'comparison_{idx}.png'))
-            plt.close()
-            
-            print(f"已保存样本 {idx} 的对比图像")
-            print(f"类别: {class_name}")
-            print(f"边界框坐标: {sample['bbox']}")
-            print(f"掩码形状: {mask.shape}")
-            print("------------------------")
-
-    def test_visualization(self):
-        """测试可视化函数"""
-        # 随机选择10个样本进行可视化
-        num_samples = 10
-        total_samples = len(self.dataset)
-        sample_indices = np.random.choice(total_samples, min(num_samples, total_samples), replace=False)
+        # 显示transformed图像
+        img_transformed = image.permute(1, 2, 0) * 0.5 + 0.5  # 反归一化
+        axes[i, 1].imshow(img_transformed)
         
-        self.visualize_sample_comparison(sample_indices)
+        # 计算缩放后的边界框坐标
+        orig_w, orig_h = orig_image.size
+        xmin_scaled = max(0, min(511, round(xmin * 512 / orig_w)))
+        xmax_scaled = max(0, min(511, round(xmax * 512 / orig_w)))
+        ymin_scaled = max(0, min(511, round(ymin * 512 / orig_h)))
+        ymax_scaled = max(0, min(511, round(ymax * 512 / orig_h)))
         
-        print(f"\n已生成 {num_samples} 个样本的对比图像")
-        print(f"输出目录: {self.output_dir}")
-        print(f"类别映射: {self.dataset.class_map}")
+        # 在transformed图像上显示缩放后的边界框
+        rect_transformed = patches.Rectangle(
+            (xmin_scaled, ymin_scaled), 
+            xmax_scaled-xmin_scaled, 
+            ymax_scaled-ymin_scaled, 
+            linewidth=2, edgecolor='r', facecolor='none'
+        )
+        axes[i, 1].add_patch(rect_transformed)
+        axes[i, 1].set_title('Transformed Image with Scaled Bbox')
+        
+        # 显示attention mask
+        im = axes[i, 2].imshow(attention_mask, cmap='viridis')
+        axes[i, 2].set_title('Attention Mask')
+        plt.colorbar(im, ax=axes[i, 2])
+        
+        # 关闭坐标轴
+        for ax in axes[i]:
+            ax.axis('off')
+    
+    plt.tight_layout()
+    plt.savefig('dataset_visualization.png')
+    plt.show()
 
-if __name__ == '__main__':
-    unittest.main(argv=[''], verbosity=2, exit=False)
+if __name__ == "__main__":
+    # 创建数据集实例
+    tf = transforms.Compose([
+        transforms.Resize((512, 512)),
+        transforms.ToTensor(),
+        transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
+    ])
+    
+    dataset = CustomDataset("./cropped_images_Czech/", transform=tf)
+    
+    # 验证数据集大小
+    print(f"Dataset size: {len(dataset)}")
+    print(f"Number of classes: {len(dataset.classes)}")
+    print(f"Classes: {dataset.classes}")
+    
+    # 可视化几个样本
+    visualize_dataset_samples(dataset, num_samples=5)
