@@ -63,10 +63,10 @@ python new_scripy.py --mode train --no_memory_cleanup
 
 该项目实现了一个基于UNet的条件扩散模型，主要组件包括：
 
-1. **EnhancedContextUnet**：增强型UNet架构，集成多种注意力机制
-2. **CoordAttention**：处理方向特征的注意力机制
-3. **LocalEnhancementModule**：对高注意力区域进行特殊增强
-4. **EnhancedDDPM**：增强型去噪扩散概率模型实现
+1. **ContextUnet**：增强型UNet架构，集成多种注意力机制
+2. **CoordAttn**：处理方向特征的注意力机制
+3. **LocalEnhancer**：对高注意力区域进行特殊增强
+4. **DDPM**：增强型去噪扩散概率模型实现
 
 ## 配置参数
 
